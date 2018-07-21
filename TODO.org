@@ -1,0 +1,4 @@
+** TODO
+
+- task getAllAssignments deve entrar em todas as matérias do usuario e retornar
+  uma lista com o ID da matéria, código da matéria, nome

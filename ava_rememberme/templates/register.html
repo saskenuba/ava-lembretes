@@ -1,0 +1,106 @@
+{% extends 'layout.html' %}
+
+
+{% block title %}
+	 AVA Reminder - Lembretes de Atividades
+{% endblock title %}
+
+{% block body %}
+    <section class="login">
+
+        <div id="mainSquare" class="ui segment">
+            <div class="ui grid center aligned">
+                <div id="squareLeftColumn" class="six wide column">
+                    <div>
+
+                    </div>
+                </div>
+                <div id="squareRightColumn" class="ten wide column">
+                    <div class="row">
+                        <h1 class="ui header poppins-light">AVA Reminder</h1>
+                        <p>Se cadastrando no AVA Reminder, você nunca mais esquecerá de fazer uma atividade ou um fórum avaliativo. Receba avisos periódicos sobre suas atividades antes que terminem.
+                        </p>
+                        <h2 class="ui header poppins-light">REGISTRO</h2>
+                        <form class="ui equal width form" method="POST" action="/">
+                            {{ form.csrf_token }}
+                            <div class="fields">
+                                <div class="field">
+                                    {{ form.nome.label }}
+                                    {{ form.nome }}
+                                </div>
+                                <div class="field">
+                                    {{ form.email.label }}
+                                    {{ form.email }}
+                                </div>
+                            </div>
+                            <div class="fields">
+                                <div class="field">
+                                    {{ form.uninoveRA.label }}
+                                    {{ form.uninoveRA }}
+                                </div>
+                                <div class="field">
+                                    {{ form.uninoveSenha.label }}
+                                    {{ form.uninoveSenha }}
+                                </div>
+                            </div>
+                            <button class="ui primary fluid button poppins-regular">CADASTRAR-SE</button>
+                        </form>
+                    </div>
+
+                    {% with message = get_flashed_messages(category_filter=["success"]) %}
+                        {% if message %}
+                            <div class="ui positive message">
+                                <i class="close icon"></i>
+                                <div class="header">
+                                    Tudo sempre acaba bem.
+                                </div>
+                                {{ message[0] }}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    {% with message = get_flashed_messages(category_filter=["error"]) %}
+                        {% if message %}
+                            <div class="ui negative message">
+                                <i class="close icon"></i>
+                                <div class="header">
+                                    Um erro foi encontrado.
+                                </div>
+                                {{ message[0] }}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    {% with messages = get_flashed_messages(category_filter=["form"]) %}
+                        {% if messages %}
+                                <div class="ui negative message">
+                                    <i class="close icon"></i>
+                                    <div class="header">
+                                        Um erro foi encontrado.
+                                    </div>
+                                    <ul class="list">
+                                        {% for key, message in messages[0].items() %}
+                                            <li>{{ message[0] }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="privacidade">
+                        <h3 class="ui sub header">
+                            Política de Privacidade
+                        </h3>
+                        <p class="">
+                            Sua privacidade é MUITO importante e sua senha é guardada sob o algoritmo de criptografia <a href="https://en.wikipedia.org/wiki/PBKDF2">PBKDF2</a> onde nem eu, o desenvolvedor, possuo acesso.
+                            <br/> Qualquer dúvida não deixe me mandar um email.
+                        </p>
+                    </div>
+
+                    <div class="login footer">
+                        App desenvolvido por <a href="http://martinmariano.com">Martin Mariano</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+{% endblock body %}

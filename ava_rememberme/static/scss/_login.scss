@@ -1,0 +1,45 @@
+$loginPage-height: 90vh;
+$loginPage-margin-top: $loginPage-height * 0.05;
+
+body {
+    background-color: lightgrey;
+    overflow: hidden;
+}
+
+#mainSquare {
+    margin: $loginPage-height*0.05 20vh;
+    min-height: $loginPage-height;
+}
+
+#squareLeftColumn  {
+
+    padding: 0;
+
+    div {
+        margin: 0;
+        display: block;
+        height: 100vh - $loginPage-margin-top * 2;
+        background-image: url(https://colorlib.com/etc/lf/Login_v17/images/bg-01.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+    }
+}
+
+#squareRightColumn {
+
+    padding: 5em;
+}
+
+.privacidade {
+    margin-top: 2em;
+
+    p {
+        font-size: 0.92rem;
+        color: grey;
+    }
+
+}
+
+.footer {
+    margin-top: 20%;
+}
