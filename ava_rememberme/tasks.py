@@ -4,6 +4,9 @@ from celery.result import allow_join_result
 import os
 import json
 
+EMAIL_DOMAIN = "mg.martinmariano.com"
+EMAIL_TEMPLATE_LOCATION = "/home/martin/Documentos/Programming/Python/Projetos/Uninove-RememberMe/ava_rememberme/templates/email/"
+
 
 @celery.task()
 def refreshAllUsers():
@@ -78,10 +81,11 @@ def emailSendConfirmation(userEmail, userName):
 
     """
     APIKEY = os.environ.get('MAILGUN_API')
-    newMail = Mailgun(APIKEY, "mg.martinmariano.com")
+    newMail = Mailgun(APIKEY, EMAIL_DOMAIN)
     newMail.recipient = userEmail
     newMail.subject = 'Lembretes configurados com sucesso.'
-    newMail.contentFromFile('./templates/email/confirmation.html', userName)
+    newMail.contentFromFile(EMAIL_TEMPLATE_LOCATION + 'confirmation.html',
+                            userName)
 
     response = newMail.send()
 
@@ -100,11 +104,12 @@ def emailSendDueDates(userEmail, userName, materias):
 
     """
     APIKEY = os.environ.get('MAILGUN_API')
-    newMail = Mailgun(APIKEY, "mg.martinmariano.com")
+    newMail = Mailgun(APIKEY, EMAIL_DOMAIN)
     newMail.recipient = userEmail
     newMail.subject = 'Você possui {} atividades pendentes.'
 
-    newMail.contentFromFile('./templates/email/confirmation.html', userName)
+    newMail.contentFromFile(EMAIL_TEMPLATE_LOCATION + 'confirmation.html',
+                            userName)
 
     response = newMail.send()
 
@@ -123,7 +128,7 @@ def emailNoMoreAssignments(userEmail, userName):
 
     """
     APIKEY = os.environ.get('MAILGUN_API')
-    newMail = Mailgun(APIKEY, "mg.martinmariano.com")
+    newMail = Mailgun(APIKEY, EMAIL_DOMAIN)
     newMail.recipient = userEmail
     newMail.subject = 'Não existem mais atividades pendentes.'
 

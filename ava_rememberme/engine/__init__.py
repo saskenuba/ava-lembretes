@@ -52,6 +52,7 @@ class AVAscraper(ContextDecorator):
         self.uninove_senha = uninove_senha
         self.options = Options()
         self.TIMEOUT_TIME = 5
+        self.TIMEOUT_TIME_LOGIN = 3
         self.debug = debug
 
         self.AVA_LOGIN_URL = "https://ava.uninove.br/seu/AVA/index.php"
@@ -84,7 +85,7 @@ class AVAscraper(ContextDecorator):
         password.send_keys(Keys.RETURN)
 
         try:
-            WebDriverWait(self.driver, self.TIMEOUT_TIME).until(
+            WebDriverWait(self.driver, self.TIMEOUT_TIME_LOGIN).until(
                 EC.url_contains(('principal')))
         except TimeoutException:
             return {
@@ -128,7 +129,7 @@ class AVAscraper(ContextDecorator):
                 EC.url_to_be((self.AVA_MAIN_URL)))
         except WrongPageError:
             raise WrongPageError(
-                'Localização incorreta. Certifique-se da página')
+                u'Localização incorreta. Certifique-se da página')
 
         menuTodasMaterias = WebDriverWait(
             self.driver, self.TIMEOUT_TIME).until(
@@ -169,7 +170,7 @@ class AVAscraper(ContextDecorator):
             except WebDriverException:
                 pass
             except TimeoutException:
-                raise WrongPageError('Não achou elemento "frm-principal".')
+                raise WrongPageError(u'Não achou elemento "frm-principal".')
 
         self._fillFormAndSubmit(idCurso, codCurso)
 
@@ -187,7 +188,7 @@ class AVAscraper(ContextDecorator):
                 soup = BeautifulSoup(titulo.get_attribute('innerHTML'), "lxml")
                 print(soup.find('p').string)
             except TimeoutError:
-                raise WrongPageError('Não achou elemento "titulo-disciplina".')
+                raise WrongPageError(u'Não achou elemento "titulo-disciplina".')
 
     def _fillFormAndSubmit(self, idCurso, codCurso):
         """Fill main page form and submits it.
