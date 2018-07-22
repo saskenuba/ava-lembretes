@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField
-from wtforms.validators import DataRequired, Email, Regexp, Length, InputRequired
+from wtforms import StringField, PasswordField, BooleanField
+from wtforms.validators import DataRequired, Email, Regexp, Length
+from wtforms.validators import InputRequired
 
 
 class RegisterForm(FlaskForm):
@@ -37,3 +38,10 @@ class RegisterForm(FlaskForm):
             DataRequired(message=u'É necessário escrever sua senha do AVA.')
         ],
         render_kw={"placeholder": "Senha UNINOVE"})
+    termosCondicoes = BooleanField(
+        u'Li e aceito o Termo de Responsabilidade descrito abaixo.',
+        validators=[
+            DataRequired(
+                message=u'Você deve ler e aceitar o Termo de Responsabilidade.'
+            )
+        ])
