@@ -2,32 +2,47 @@ $loginPage-height: 90vh;
 $loginPage-margin-top: $loginPage-height * 0.05;
 
 body {
-    background-color: lightgrey;
+    background-image: url("../images/BG.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
     overflow: hidden;
+
+    @media (max-width: 992px) {
+        overflow: visible;
+        background-repeat: repeat-y;
+    }
+
 }
 
 #mainSquare {
     margin: $loginPage-height*0.05 20vh;
     min-height: $loginPage-height;
+    box-shadow: 0px 10px 5px 5px rgba(0, 0, 0, 0.5);
+
+    @media (max-width: 991px) {
+        margin: $loginPage-height*0.05 5vh;
+    }
 }
 
 #squareLeftColumn  {
 
     padding: 0;
-
-    div {
-        margin: 0;
-        display: block;
-        height: 100vh - $loginPage-margin-top * 2;
-        background-image: url(https://colorlib.com/etc/lf/Login_v17/images/bg-01.jpg);
-        background-repeat: no-repeat;
-        background-size: cover;
-    }
+    background-image: url("../images/AVA Reminder Me - Coluna16x9.jpg");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    margin: 0;
+    height: 100vh - $loginPage-margin-top * 2;
 }
 
 #squareRightColumn {
 
     padding: 5em;
+    height: 100vh - $loginPage-margin-top * 2;
+
+    @media (max-width: 991px) {
+        padding: 2em;
+        height: 100%
+    }
 }
 
 .privacidade {
@@ -41,5 +56,5 @@ body {
 }
 
 .footer {
-    margin-top: 20%;
+    margin: 10%  auto 0 auto;
 }

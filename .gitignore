@@ -206,5 +206,8 @@ variables.txt
 semantic.json
 semantic/
 
+# prepros
+prepros-6.config
+
 
 # End of https://www.gitignore.io/api/node,linux,python

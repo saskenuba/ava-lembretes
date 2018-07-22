@@ -2,25 +2,21 @@
 
 
 {% block title %}
-	 AVA Reminder - Lembretes de Atividades
+	 Lembretes AVA - Lembretes de Atividades
 {% endblock title %}
 
 {% block body %}
     <section class="login">
 
         <div id="mainSquare" class="ui segment">
-            <div class="ui grid center aligned">
-                <div id="squareLeftColumn" class="six wide column">
-                    <div>
-
-                    </div>
+            <div class="ui grid">
+                <div id="squareLeftColumn" class="six wide column computer only">
                 </div>
-                <div id="squareRightColumn" class="ten wide column">
+                <div id="squareRightColumn" class="ten wide column computer only">
                     <div class="row">
-                        <h1 class="ui header poppins-light">AVA Reminder</h1>
-                        <p>Se cadastrando no AVA Reminder, você nunca mais esquecerá de fazer uma atividade ou um fórum avaliativo. Receba avisos periódicos sobre suas atividades antes que terminem.
+                        <h1 class="ui header centered poppins-light">Lembretes AVA</h1>
+                        <p class="justified">Cadastrando-se no Lembretes AVA, você nunca mais esquecerá de fazer uma atividade ou um fórum avaliativo, receba lembretes periódicos sempre que novas atividades forem adicionadas.
                         </p>
-                        <h2 class="ui header poppins-light">REGISTRO</h2>
                         <form class="ui equal width form" method="POST" action="/">
                             {{ form.csrf_token }}
                             <div class="fields">
@@ -86,12 +82,99 @@
                     {% endwith %}
 
                     <div class="privacidade">
-                        <h3 class="ui sub header">
-                            Política de Privacidade
+                        <h3 class="ui sub header centered">
+                            Termo de responsabilidade
                         </h3>
-                        <p class="">
-                            Sua privacidade é MUITO importante e sua senha é guardada sob o algoritmo de criptografia <a href="https://en.wikipedia.org/wiki/PBKDF2">PBKDF2</a> onde nem eu, o desenvolvedor, possuo acesso.
-                            <br/> Qualquer dúvida não deixe me mandar um email.
+                        <p class="justified">
+                            Este site não possui QUAISQUER afiliações com a universidade UNINOVE, sendo criado apenas como item de portfolio e aprimoramento de técnicas de design de sistemas.
+                            <br/>Apesar de ser construido com testes intensivos de performance e contra erros, existe a possibilidade de seu funcionamento cessar sem aviso prévio, logo sugiro que não dependa inteiramente para checagem de prazos de atividades.
+                            <br/>Caso tenha interesse em conhecer o funcionamento interno do sistema, você pode clicar <a href="">aqui</a> e acessar a página de portfolio do aplicativo.
+                        </p>
+                    </div>
+
+                    <div class="login footer">
+                        App desenvolvido por <a href="http://martinmariano.com">Martin Mariano</a>
+                    </div>
+                </div>
+
+
+                <div id="squareRightColumn" class="sixteen wide column mobile tablet only">
+                    <div class="row">
+                        <h1 class="ui header centered poppins-light">Lembretes AVA</h1>
+                        <p class="justified">Cadastrando-se no Lembretes AVA, você nunca mais esquecerá de fazer uma atividade ou um fórum avaliativo, receba lembretes periódicos sempre que novas atividades forem adicionadas.
+                        </p>
+                        <form class="ui equal width form" method="POST" action="/">
+                            {{ form.csrf_token }}
+                            <div class="fields">
+                                <div class="field">
+                                    {{ form.nome.label }}
+                                    {{ form.nome }}
+                                </div>
+                                <div class="field">
+                                    {{ form.email.label }}
+                                    {{ form.email }}
+                                </div>
+                            </div>
+                            <div class="fields">
+                                <div class="field">
+                                    {{ form.uninoveRA.label }}
+                                    {{ form.uninoveRA }}
+                                </div>
+                                <div class="field">
+                                    {{ form.uninoveSenha.label }}
+                                    {{ form.uninoveSenha }}
+                                </div>
+                            </div>
+                            <button class="ui primary fluid button poppins-regular">CADASTRAR-SE</button>
+                        </form>
+                    </div>
+
+                    {% with message = get_flashed_messages(category_filter=["success"]) %}
+                        {% if message %}
+                            <div class="ui positive message">
+                                <i class="close icon"></i>
+                                <div class="header">
+                                    Tudo sempre acaba bem.
+                                </div>
+                                {{ message[0] }}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    {% with message = get_flashed_messages(category_filter=["error"]) %}
+                        {% if message %}
+                            <div class="ui negative message">
+                                <i class="close icon"></i>
+                                <div class="header">
+                                    Um erro foi encontrado.
+                                </div>
+                                {{ message[0] }}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    {% with messages = get_flashed_messages(category_filter=["form"]) %}
+                        {% if messages %}
+                                <div class="ui negative message">
+                                    <i class="close icon"></i>
+                                    <div class="header">
+                                        Um erro foi encontrado.
+                                    </div>
+                                    <ul class="list">
+                                        {% for key, message in messages[0].items() %}
+                                            <li>{{ message[0] }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="privacidade">
+                        <h3 class="ui sub header centered">
+                            Termo de responsabilidade
+                        </h3>
+                        <p class="justified">
+                            Este site não possui QUAISQUER afiliações com a universidade UNINOVE, sendo criado apenas como item de portfolio e aprimoramento de técnicas de design de sistemas.
+                            <br/>Apesar de ser construido com testes intensivos de performance e contra erros, existe a possibilidade de seu funcionamento cessar sem aviso prévio, logo sugiro que não dependa inteiramente para checagem de prazos de atividades.
+                            <br/>Caso tenha interesse em conhecer o funcionamento interno do sistema, você pode clicar <a href="">aqui</a> e acessar a página de portfolio do aplicativo.
                         </p>
                     </div>
 
