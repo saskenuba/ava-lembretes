@@ -24,9 +24,27 @@
 </head>
 
 <body>
-    {% block body %}
+    <section class="login">
 
-    {% endblock body %}
+        <div id="mainSquare" class="ui segment">
+
+            <div class="ui grid">
+                <!-- Above tablet size content -->
+                <div id="squareLeftColumn" class="six wide column computer only"></div>
+                <div id="squareRightColumn" class="ten wide column computer only">
+                    {% block body %} {% endblock body %}
+                </div>
+
+
+                <!-- Mobile content -->
+                <div id="squareRightColumn" class="sixteen wide column mobile tablet only">
+                    {{ self.body() }}
+                </div>
+
+            </div>
+        </div>
+
+    </section>
 </body>
 
 <script type="text/javascript" src="{{ url_for('static', filename='dist/semantic.min.js') }}"></script>
