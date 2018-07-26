@@ -35,7 +35,7 @@ class Mailgun():
             "https://api.mailgun.net/v3/{}/messages".format(self.subdomain),
             auth=("api", "{}".format(self.apikey)),
             data={
-                "from": "AVA Reminder Me <AVAreminder@{}>".format(self.domain),
+                "from": "Lembretes AVA <LembretesAVA@{}>".format(self.domain),
                 "to": ["{}".format(self.recipient)],
                 "subject": "{}".format(self.subject),
                 "html": self.content

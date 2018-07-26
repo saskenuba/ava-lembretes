@@ -1,33 +1,50 @@
 from ava_rememberme import celery
 from ava_rememberme.mail import Mailgun
 from celery.result import allow_join_result
+from itsdangerous import URLSafeTimedSerializer
+from flask import current_app, url_for
 import os
 import json
 
-EMAIL_DOMAIN = "mg.martinmariano.com"
 EMAIL_TEMPLATE_LOCATION = "/home/martin/Documentos/Programming/Python/Projetos/Uninove-RememberMe/ava_rememberme/templates/email/"
+EMAIL_DOMAIN = "mg.martinmariano.com"
+DEBUG = False
 
 
 @celery.task()
-def refreshAllUsers():
+def databaseRefreshAllUsers():
     """Refresh the whole database, logging in each user on AVA Platform,
     gathers all disciplines with any assignment or forum with a due date,
     then updates the database.
     """
 
-    from .database_models import Users
+    from .database_models import Users, Assignments
 
     allUsers = Users.get()
 
     for user in allUsers:
+
+        materiasList = None
         result = getAllAssignments.apply_async((user.uninove_ra,
                                                 user.uninove_senha))
         with allow_join_result():
             materiasList = result.get()
 
-        print('recebeu lista de materias do user')
-        print(json.dumps(materiasList))
+        print(user)
+        materiasJson = json.dumps(materiasList)
+        print(materiasJson)
 
+    return 'done'
+
+
+@celery.task()
+def databaseSubtractDay():
+    """Subtract one day from the remaining days of assignment from all users.
+    """
+
+    from .database_models import Users
+
+    allUsers = Users.get()
     return 'done'
 
 
@@ -41,7 +58,7 @@ def registerUserChecker(uninove_ra, uninove_senha):
 
     """
     from .engine import AVAscraperFactory
-    with AVAscraperFactory.getInstance(debug=True) as scraper:
+    with AVAscraperFactory.getInstance(debug=DEBUG) as scraper:
         scraper.uninove_ra = uninove_ra
         scraper.uninove_senha = uninove_senha
         result = scraper.loginAva()
@@ -58,19 +75,19 @@ def getAllAssignments(uninove_ra, uninove_senha):
 
     """
     from .engine import AVAscraper
-    with AVAscraper(debug=True) as scraper:
+    with AVAscraper(debug=DEBUG) as scraper:
         scraper.uninove_ra = uninove_ra
         scraper.uninove_senha = uninove_senha
         scraper.loginAva()
         materiasList = scraper.getMaterias()
-        # return materiasList
-        for materia in materiasList:
+        for index, materia in enumerate(materiasList):
             scraper.getAssignmentsAndForum(materia['IDCurso'],
                                            materia['CodCurso'])
+        return materiasList
 
 
 @celery.task()
-def emailSendConfirmation(userEmail, userName):
+def emailSendConfirmation(userEmail, userName, secret):
     """
     Send confirmation email that sign-up was successfull.
 
@@ -80,12 +97,22 @@ def emailSendConfirmation(userEmail, userName):
     :rtype:
 
     """
+
     APIKEY = os.environ.get('MAILGUN_API')
     newMail = Mailgun(APIKEY, EMAIL_DOMAIN)
     newMail.recipient = userEmail
     newMail.subject = 'Lembretes configurados com sucesso.'
-    newMail.contentFromFile(EMAIL_TEMPLATE_LOCATION + 'confirmation.html',
-                            userName)
+
+    emailTemplate = current_app.jinja_env.get_template(
+        "/email/confirmation.html")
+
+    newToken = URLSafeTimedSerializer(secret, salt='user-confirmation')
+    token = newToken.dumps(userEmail)
+
+    with current_app.app_context(), current_app.test_request_context():
+        newMail.content = emailTemplate.render(
+            userName=userName,
+            action_url=url_for('confirm', token=token, _external=True))
 
     response = newMail.send()
 

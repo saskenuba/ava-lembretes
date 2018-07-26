@@ -1,9 +1,9 @@
 from flask import Flask
-from secrets import token_bytes
+from secrets import token_hex
 from ava_rememberme.controller import create_celery
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = token_bytes(24)
+app.config['SECRET_KEY'] = token_hex(32)
 
 celery = create_celery(app)
 

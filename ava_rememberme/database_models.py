@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime
+from sqlalchemy import JSON, Boolean
 from sqlalchemy.orm import relationship
 from passlib.hash import pbkdf2_sha256
 from ava_rememberme.database import Base
@@ -13,6 +14,9 @@ class Users(Base):
     nome = Column(String(50))
     uninove_ra = Column(Text, unique=True)
     uninove_senha = Column(Text)
+    confirmed = Column(Boolean, default=False)
+    confirmed_at = Column(DateTime, nullable=True)
+
     profile = relationship('Profiles', backref='Users', cascade='all')
     assignment = relationship('Assignments', backref='Users', cascade='all')
 
@@ -23,8 +27,15 @@ class Users(Base):
         self.uninove_senha = uninove_senha
 
     def __repr__(self):
-        return 'User Object: ID {}, Email {}, RA {}'.format(
-            self.user_id, self.email, self.uninove_ra)
+        return 'User Object: ID {}, Nome {}, Email {}, RA {}'.format(
+            self.user_id, self.nome, self.email, self.uninove_ra)
+
+    def isConfirmed(self):
+        return self.confirmed
+
+    def activateUser(self):
+        self.confirmed = True
+        self.confirmed_at = datetime.datetime.now()
 
     @staticmethod
     def get():
@@ -44,8 +55,14 @@ class Assignments(Base):
 
     user_id = Column(Integer, ForeignKey('Users.user_id'))
     assignment_id = Column(Integer, primary_key=True)
-    questionario = Column(JSON)
-    forum = Column(JSON)
+    name = Column('Name', String(80))
+    discipline = Column('Discipline', String(60))
+
+    # tipo = questionario ou forum
+    type = Column('Type', String(20))
+
+    # time in days before assignment ends
+    dueDate = Column('Due_Date', Integer)
 
 
 class Profiles(Base):
