@@ -1,10 +1,14 @@
-from ava_rememberme import celery
-from ava_rememberme.mail import Mailgun
-from celery.result import allow_join_result
-from itsdangerous import URLSafeTimedSerializer
-from flask import current_app, url_for
-import os
 import json
+import os
+
+from celery.result import allow_join_result
+from flask import current_app, url_for
+from itsdangerous import URLSafeSerializer, URLSafeTimedSerializer
+
+from ava_rememberme import celery
+
+from .exceptions import AssignmentExpired
+from .mail import Mailgun
 
 EMAIL_TEMPLATE_LOCATION = "/home/martin/Documentos/Programming/Python/Projetos/Uninove-RememberMe/ava_rememberme/templates/email/"
 EMAIL_DOMAIN = "mg.martinmariano.com"
@@ -24,6 +28,10 @@ def databaseRefreshAllUsers():
 
     for user in allUsers:
 
+        # skip cycle if user not confirmed
+        if not user.isActive():
+            continue
+
         materiasList = None
         result = getAllAssignments.apply_async((user.uninove_ra,
                                                 user.uninove_senha))
@@ -42,10 +50,24 @@ def databaseSubtractDay():
     """Subtract one day from the remaining days of assignment from all users.
     """
 
-    from .database_models import Users
+    from .database import db_session
+    from .database_models import Assignments
 
-    allUsers = Users.get()
-    return 'done'
+    allAssignments = Assignments.get()
+
+    for assignment in allAssignments:
+
+        if DEBUG:
+            print(assignment.Users)
+
+        try:
+            assignment.decreaseDay()
+        except AssignmentExpired:
+            db_session.delete(assignment)
+
+    db_session.commit()
+    db_session.close()
+    return True
 
 
 @celery.task()
@@ -57,8 +79,8 @@ def registerUserChecker(uninove_ra, uninove_senha):
     :returns: dict
 
     """
-    from .engine import AVAscraperFactory
-    with AVAscraperFactory.getInstance(debug=DEBUG) as scraper:
+    from .engine import AVAscraper
+    with AVAscraper(debug=DEBUG) as scraper:
         scraper.uninove_ra = uninove_ra
         scraper.uninove_senha = uninove_senha
         result = scraper.loginAva()
@@ -120,7 +142,7 @@ def emailSendConfirmation(userEmail, userName, secret):
 
 
 @celery.task()
-def emailSendDueDates(userEmail, userName, materias):
+def emailSendDueDates(userEmail, userName, secret, materias):
     """
     Send email with all user due dates.
 
@@ -133,10 +155,20 @@ def emailSendDueDates(userEmail, userName, materias):
     APIKEY = os.environ.get('MAILGUN_API')
     newMail = Mailgun(APIKEY, EMAIL_DOMAIN)
     newMail.recipient = userEmail
-    newMail.subject = 'Você possui {} atividades pendentes.'
+    newMail.subject = 'Você possui {} atividades pendentes.'.format(
+        len(materias))
 
-    newMail.contentFromFile(EMAIL_TEMPLATE_LOCATION + 'confirmation.html',
-                            userName)
+    emailTemplate = current_app.jinja_env.get_template(
+        "/email/assignments.html")
+
+    newToken = URLSafeSerializer(secret, salt='user-unsubscribe')
+    token = newToken.dumps(userEmail)
+
+    with current_app.app_context(), current_app.test_request_context():
+        newMail.content = emailTemplate.render(
+            userName=userName,
+            action_url=url_for('unsubscribe', token=token, _external=True),
+            materias=materias)
 
     response = newMail.send()
 

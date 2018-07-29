@@ -3,7 +3,7 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Lembretes AVA - Bem vindo</title>
+    <title>Você possui {{ materias | length }} atividades pendentes.</title>
     <!--
     The style block is collapsed on page load to save you some scrolling.
     Postmark automatically inlines all CSS properties for maximum email client
@@ -242,7 +242,7 @@
     .purchase {
       width: 100%;
       margin: 0;
-      padding: 35px 0;
+      padding: 15px 0;
       -premailer-width: 100%;
       -premailer-cellpadding: 0;
       -premailer-cellspacing: 0;
@@ -251,7 +251,7 @@
     .purchase_content {
       width: 100%;
       margin: 0;
-      padding: 25px 0 0 0;
+      padding: 0 0 0 0;
       -premailer-width: 100%;
       -premailer-cellpadding: 0;
       -premailer-cellspacing: 0;
@@ -392,18 +392,19 @@
     </style>
   </head>
   <body>
-    <span class="preheader">Confirme seu email para habilitar o Lembretes AVA.</span>
+    <span class="preheader">Este é um lembrete automático. Você possui {{ materias | length }} atividades.</span>
     <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td align="center">
           <table class="email-content" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td class="email-masthead">
-                <a href="{{ url_for('index', _external='True')}}" class="email-masthead_name">
-                    Lembretes AVA
-      </a>
-              </td>
-            </tr>
+              <tr>
+                  <td class="email-masthead">
+                      <a href="{{ url_for('index', _external='True')}}" class="email-masthead_name">
+                          Lembretes AVA
+
+                      </a>
+                  </td>
+              </tr>
             <!-- Email Body -->
             <tr>
               <td class="email-body" width="100%" cellpadding="0" cellspacing="0">
@@ -411,41 +412,59 @@
                   <!-- Body content -->
                   <tr>
                     <td class="content-cell">
-                      <h1>Olá, {{userName}}!</h1>
-                      <p>Obrigado por utilizar o Lembretes AVA.</p>
-                      <p>Falta muito pouco para começar a utilizar o serviço, o último passo é clicar no botão abaixo para confirmar seu email.</p>
+                      <h1>Olá {{ userName }},</h1>
+                      <p>Detectamos {{ materias | length }} atividades no AVA que você ainda não fez.</p>
+                      <p>Segundo nossas estatísticas, 100% dos alunos que não veem as atividades, deixam de fazê-las. :)</p>
+                      <!-- <table class="attributes" width="100%" cellpadding="0" cellspacing="0">
+                           <tr>
+                           <td class="attributes_content">
+                           <table width="100%" cellpadding="0" cellspacing="0">
+                           <tr>
+                           <td class="attributes_item"><strong>Amount Due:</strong> {{total}}</td>
+                           </tr>
+                           <tr>
+                           <td class="attributes_item"><strong>Due By:</strong> {{due_date}}</td>
+                           </tr>
+                           </table>
+                           </td>
+                           </tr>
+                           </table> -->
+
                       <!-- Action -->
-                      <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0">
+                      <table class="purchase" width="100%" cellpadding="0" cellspacing="0">
                         <tr>
-                          <td align="center">
-                            <!-- Border based button
-                       https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->
-                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                          <td colspan="3">
+                            <table class="purchase_content" width="100%" cellpadding="0" cellspacing="0">
                               <tr>
-                                <td align="center">
-                                  <table border="0" cellspacing="0" cellpadding="0">
-                                    <tr>
-                                      <td>
-                                        <a href="{{action_url}}" class="button button--" target="_blank">Confirmar email</a>
-                                      </td>
-                                    </tr>
-                                  </table>
-                                </td>
+                                <th class="purchase_heading">
+                                  <p>Matéria</p>
+                                </th>
+                                <th class="purchase_heading">
+                                    <p class="align-center">Tipo</p>
+                                </th>
+                                <th class="purchase_heading">
+                                    <p class="align-right">Dias Restantes</p>
+                                </th>
                               </tr>
+                              {% for materia in materias %}
+                              <tr>
+                                  <td width="40%" class="purchase_item">{{materia.disciplina}}</td>
+                                  <td width="40%" class="align-center purchase_item">{{materia.tipo}}</td>
+                                  <td class="align-right" width="20%" class="purchase_item">{{materia.dias}}</td>
+                              </tr>
+                              {% endfor %}
                             </table>
                           </td>
                         </tr>
                       </table>
-                      <p>Agora não tem mais desculpa para esquecer de realizar as atividades, hein!</p>
                       <p>Se você tem qualquer tipo de dúvida, sinta-se livre para enviar um email para <a href="mailto:contato@martinmariano.com">contato@martinmariano.com</a>.</p>
                       <p>Obrigado,
-                        <br>Martin</p>
-                      <p><strong>P.S.</strong> Uma vez confirmado, você passará a receber os lembretes de novas atividades que aparecerem em seu AVA por email, e neste mesmo email você poderá cancelar sua inscrição no serviço.</p>
+                          <br>Martin</p>
                       <!-- Sub copy -->
                       <table class="body-sub">
                         <tr>
                           <td>
-                            <p class="sub">Se você está com dificuldade para clicar/ver o botão, copie o link abaixo e cole em seu navegador:</p>
+                            <p class="sub">Se você deseja se descadastrar do serviço, basta clicar no link abaixo, ou copiar e colá-lo em seu navegador.</p>
                             <p class="sub">{{action_url}}</p>
                           </td>
                         </tr>
