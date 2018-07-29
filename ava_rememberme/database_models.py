@@ -1,9 +1,12 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime
-from sqlalchemy import JSON, Boolean
-from sqlalchemy.orm import relationship
-from passlib.hash import pbkdf2_sha256
-from ava_rememberme.database import Base
 import datetime
+
+from passlib.hash import pbkdf2_sha256
+from sqlalchemy import (JSON, Boolean, Column, DateTime, ForeignKey, Integer,
+                        String, Text)
+from sqlalchemy.orm import relationship
+
+from ava_rememberme.database import Base
+from ava_rememberme.exceptions import AssignmentExpired
 
 
 class Users(Base):
@@ -14,11 +17,11 @@ class Users(Base):
     nome = Column(String(50))
     uninove_ra = Column(Text, unique=True)
     uninove_senha = Column(Text)
-    confirmed = Column(Boolean, default=False)
+    active = Column(Boolean, default=False)
     confirmed_at = Column(DateTime, nullable=True)
 
     profile = relationship('Profiles', backref='Users', cascade='all')
-    assignment = relationship('Assignments', backref='Users', cascade='all')
+    assignments = relationship('Assignments', backref='Users', cascade='all')
 
     def __init__(self, email, nome, uninove_ra, uninove_senha):
         self.email = email
@@ -30,12 +33,15 @@ class Users(Base):
         return 'User Object: ID {}, Nome {}, Email {}, RA {}'.format(
             self.user_id, self.nome, self.email, self.uninove_ra)
 
-    def isConfirmed(self):
-        return self.confirmed
+    def isActive(self):
+        return self.active
 
-    def activateUser(self):
-        self.confirmed = True
+    def activate(self):
+        self.active = True
         self.confirmed_at = datetime.datetime.now()
+
+    def deactivate(self, ):
+        self.active = False
 
     @staticmethod
     def get():
@@ -63,6 +69,19 @@ class Assignments(Base):
 
     # time in days before assignment ends
     dueDate = Column('Due_Date', Integer)
+
+    @staticmethod
+    def get():
+        return Assignments.query.all()
+
+    def __repr__(self):
+        return u'{} ID {}, Usuário {}, Dias Restantes: {}'.format(
+            self.type, self.assignment_id, self.user_id, self.dueDate)
+
+    def decreaseDay(self):
+        if self.dueDate < 1:
+            raise AssignmentExpired()
+        self.dueDate -= 1
 
 
 class Profiles(Base):

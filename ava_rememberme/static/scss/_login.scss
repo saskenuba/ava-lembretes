@@ -18,6 +18,7 @@ body {
     margin: $loginPage-height*0.05 20vh;
     min-height: $loginPage-height;
     box-shadow: 0px 10px 5px 5px rgba(0, 0, 0, 0.5);
+    border: 0!important;
 
     @media (max-width: 991px) {
         margin: $loginPage-height*0.05 5vh;

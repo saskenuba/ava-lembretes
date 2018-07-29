@@ -52,7 +52,7 @@ class AVAscraper(ContextDecorator):
         self.uninove_senha = uninove_senha
         self.options = Options()
         self.TIMEOUT_TIME = 5
-        self.TIMEOUT_TIME_LOGIN = 3
+        self.TIMEOUT_TIME_LOGIN = 5
         self.debug = debug
 
         self.AVA_LOGIN_URL = "https://ava.uninove.br/seu/AVA/index.php"

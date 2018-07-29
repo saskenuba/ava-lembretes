@@ -32,35 +32,36 @@
     </form>
 </div>
 
-{% with message = get_flashed_messages(category_filter=["success"]) %} {% if message %}
-<div class="ui positive message">
-    <i class="close icon"></i>
-    <div class="header">
-        Tudo sempre acaba bem.
-    </div>
-    {{ message[0] }}
-</div>
-{% endif %} {% endwith %} {% with message = get_flashed_messages(category_filter=["error"]) %} {% if message %}
-<div class="ui negative message">
-    <i class="close icon"></i>
-    <div class="header">
-        Um erro foi encontrado.
-    </div>
-    {{ message[0] }}
-</div>
-{% endif %} {% endwith %} {% with messages = get_flashed_messages(category_filter=["form"]) %} {% if messages %}
-<div class="ui negative message">
-    <i class="close icon"></i>
-    <div class="header">
-        Um erro foi encontrado.
-    </div>
-    <ul class="list">
-        {% for key, message in messages[0].items() %}
-        <li>{{ message[0] }}</li>
-        {% endfor %}
-    </ul>
-</div>
-{% endif %} {% endwith %}
+{% with message = get_flashed_messages(category_filter=["success"]) %}
+    {% if message %}
+        <div class="ui positive message">
+            <i class="close icon"></i>
+            <div class="header">
+                Tudo sempre acaba bem.
+            </div>
+            {{ message[0] }}
+        </div>
+    {% endif %} {% endwith %} {% with message = get_flashed_messages(category_filter=["error"]) %} {% if message %}
+        <div class="ui negative message">
+            <i class="close icon"></i>
+            <div class="header">
+                Um erro aconteceu na checagem com o AVA.
+            </div>
+            {{ message[0] }}
+        </div>
+    {% endif %} {% endwith %} {% with messages = get_flashed_messages(category_filter=["form"]) %} {% if messages %}
+        <div class="ui negative message">
+            <i class="close icon"></i>
+            <div class="header">
+                Ocorreu um erro em seu formulário.
+            </div>
+            <ul class="list">
+                {% for key, message in messages[0].items() %}
+                    <li>{{ message[0] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %} {% endwith %}
 
 <div class="privacidade">
     <h3 class="ui sub header centered">

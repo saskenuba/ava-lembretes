@@ -12,7 +12,6 @@ flask-sqlalchemy = "*"
 ava-rememberme = {editable = true, path = "."}
 "psycopg2" = "*"
 passlib = "*"
-requests-html = "*"
 "beautifulsoup4" = "*"
 
 [dev-packages]
@@ -21,6 +20,7 @@ autoflake = "*"
 flake8 = "*"
 ipython = "*"
 jedi = "*"
+isort = "*"
 
 [requires]
 python_version = "3.6"
