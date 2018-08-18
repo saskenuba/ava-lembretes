@@ -2,3 +2,8 @@
 
 - task getAllAssignments deve entrar em todas as matérias do usuario e retornar
   uma lista com o ID da matéria, código da matéria, nome
+
+- emailSendConfirmation está usando um import de environment para fazer o
+  template do email, verificar depois se não causa erros
+
+- inserir controle de errro se o email já existir no bd

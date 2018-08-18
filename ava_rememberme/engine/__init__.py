@@ -1,16 +1,19 @@
-from contextlib import ContextDecorator
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.firefox.options import Options
-from selenium.common.exceptions import WebDriverException, TimeoutException
-from .exceptions import DriverInstanceError, LoginError, ScraperError, WrongPageError
-from bs4 import BeautifulSoup
-import re
 import logging
+import re
 import traceback
+from contextlib import ContextDecorator
+
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from .exceptions import (DriverInstanceError, LoginError, ScraperError,
+                         WrongPageError)
 
 
 class AVAscraperFactory:

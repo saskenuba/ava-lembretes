@@ -207,7 +207,12 @@ semantic.json
 semantic/
 
 # prepros
-prepros-6.config
+*.config
+prepros-6.*
+
+# pipenv related
+Pipfile.*
+Pipfile
 
 
 # End of https://www.gitignore.io/api/node,linux,python
