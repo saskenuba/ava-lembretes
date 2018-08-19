@@ -62,10 +62,21 @@ class Disciplines(Base):
 
     discipline_id = Column('DisciplineID', Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('Users.user_id'))
-    nome = Column('Name', String(60))
+    name = Column('Name', String(60))
     isOnline = Column('isOnline', Boolean)
     idCurso = Column('IdCurso', Integer)
     codCurso = Column('CodCurso', Integer)
+
+    def __init__(self, user_id, name, isOnline, idCurso, codCurso):
+        self.user_id = user_id
+        self.name = name
+        self.isOnline = isOnline
+        self.idCurso = idCurso
+        self.codCurso = codCurso
+
+    def __repr__(self):
+        return u'Disciplina: {} ID {}, Online: {}'.format(
+            self.name, self.discipline_id, self.isOnline)
 
 
 class Assignments(Base):
@@ -83,6 +94,14 @@ class Assignments(Base):
     # time in days before assignment ends
     dueDate = Column('Due_Date', DateTime)
 
+    def __init__(self, user_id, name, discipline_id, type, dueDate):
+        "docstring"
+        self.user_id = user_id
+        self.name = name
+        self.discipline_id = discipline_id
+        self.type = type
+        self.dueDate = dueDate
+
     @staticmethod
     def get():
         return Assignments.query.all()
@@ -91,10 +110,12 @@ class Assignments(Base):
         return u'{} ID {}, Usuário {}, Dias Restantes: {}'.format(
             self.type, self.assignment_id, self.user_id, self.dueDate)
 
-    def decreaseDay(self):
-        if self.dueDate < 1:
+    @property
+    def daysLeft(self):
+        remainingDays = self.dueDate - datetime.datetime.now()
+        if remainingDays.days < 1:
             raise AssignmentExpired()
-        self.dueDate -= 1
+        return remainingDays.days
 
 
 class Profiles(Base):

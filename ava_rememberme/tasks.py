@@ -1,5 +1,6 @@
 import json
 import os
+import datetime
 
 from celery.result import allow_join_result
 from flask import current_app, url_for
@@ -12,17 +13,18 @@ from .mail import Mailgun
 
 EMAIL_TEMPLATE_LOCATION = "/home/martin/Documentos/Programming/Python/Projetos/Uninove-RememberMe/ava_rememberme/templates/email/"
 EMAIL_DOMAIN = "mg.martinmariano.com"
-DEBUG = False
+DEBUG = True
 
 
 @celery.task()
-def databaseRefreshAllUsers():
+def databaseRefreshAssignments():
     """Refresh the whole database, logging in each user on AVA Platform,
     gathers all disciplines with any assignment or forum with a due date,
     then updates the database.
     """
 
     from .database_models import Users, Assignments
+    from .database import db_session
 
     allUsers = Users.get()
 
@@ -32,42 +34,69 @@ def databaseRefreshAllUsers():
         if not user.isActive():
             continue
 
-        materiasList = None
-        result = getAllAssignments.apply_async((user.uninove_ra,
-                                                user.uninove_senha))
-        with allow_join_result():
-            materiasList = result.get()
+        onlineDisciplines = [
+            discipline for discipline in user.disciplines
+            if discipline.isOnline is True
+        ]
 
-        print(user)
-        materiasJson = json.dumps(materiasList)
-        print(materiasJson)
+        assignmentList = None
+        result = getUserAssignments.apply_async(
+            (user.uninove_ra, user.uninove_senha, onlineDisciplines[0].idCurso,
+             onlineDisciplines[0].codCurso))
+
+        with allow_join_result():
+            assignmentList = result.get()
+
+        for assignment in assignmentList:
+            newAssignment = Assignments(user.user_id, assignment['name'],
+                                        onlineDisciplines[0].discipline_id,
+                                        assignment['type'],
+                                        assignment['days_left'])
+            db_session.add(newAssignment)
+        db_session.commit()
 
     return 'done'
 
 
 @celery.task()
-def databaseSubtractDay():
-    """Subtract one day from the remaining days of assignment from all users.
+def databaseRefreshDisciplines():
+    """Refresh the whole database, logging in each user on AVA Platform,
+    gathers all disciplines with any assignment or forum with a due date,
+    then updates the database.
     """
 
+    from .database_models import Users, Disciplines
     from .database import db_session
-    from .database_models import Assignments
 
-    allAssignments = Assignments.get()
+    allUsers = Users.get()
 
-    for assignment in allAssignments:
+    for user in allUsers:
+        print(user)
 
-        if DEBUG:
-            print(assignment.Users)
+        # skip cycle if user not confirmed
+        if not user.isActive():
+            continue
 
-        try:
-            assignment.decreaseDay()
-        except AssignmentExpired:
-            db_session.delete(assignment)
+        disciplineList = None
+        result = getAllDisciplines.apply_async((user.uninove_ra,
+                                                user.uninove_senha))
+        with allow_join_result():
+            disciplineList = result.get()
 
-    db_session.commit()
-    db_session.close()
-    return True
+        # verificar se é a melhor maneira de fazê-lo, as matérias repetem-se para
+        # todos os usuários
+        for discipline in disciplineList:
+            novaDisciplina = Disciplines(user.user_id,
+                                         str.title(discipline['Name']),
+                                         discipline['isOnline'],
+                                         discipline['IDCurso'],
+                                         discipline['CodCurso'])
+            db_session.add(novaDisciplina)
+        db_session.commit()
+        print('-- End of user --')
+        print()
+
+    return 'done'
 
 
 @celery.task()
@@ -88,12 +117,37 @@ def registerUserChecker(uninove_ra, uninove_senha):
 
 
 @celery.task()
-def getAllAssignments(uninove_ra, uninove_senha):
-    """Get list of all user disciplines, idCurso and codCurso.
+def getUserAssignments(uninove_ra, uninove_senha, idCurso, codCurso):
+    """Get list of all user assignments.
 
     :param uninove_ra: string
     :param uninove_senha: string
-    :returns: dict
+    :returns: name, status, days_left, type
+    :rtype: dict
+
+    """
+    from .engine import AVAscraper
+    with AVAscraper(debug=DEBUG) as scraper:
+        scraper.uninove_ra = uninove_ra
+        scraper.uninove_senha = uninove_senha
+        scraper.loginAva()
+        questionarios = scraper.getQuestionarios(idCurso, codCurso)
+
+        for questionario in questionarios:
+            questionario['days_left'] = datetime.datetime.now(
+            ) + datetime.timedelta(days=int(questionario['days_left']))
+
+        return questionarios
+
+
+@celery.task()
+def getAllDisciplines(uninove_ra, uninove_senha):
+    """Get all users disciplines and checks if they are on-site or online.
+
+    :param uninove_ra: string, user RA
+    :param uninove_senha:string, user AVA password
+    :returns:
+    :rtype:
 
     """
     from .engine import AVAscraper
@@ -102,9 +156,6 @@ def getAllAssignments(uninove_ra, uninove_senha):
         scraper.uninove_senha = uninove_senha
         scraper.loginAva()
         materiasList = scraper.getMaterias()
-        for index, materia in enumerate(materiasList):
-            scraper.getAssignmentsAndForum(materia['IDCurso'],
-                                           materia['CodCurso'])
         return materiasList
 
 

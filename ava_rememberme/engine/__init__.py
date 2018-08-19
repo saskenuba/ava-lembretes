@@ -56,6 +56,7 @@ class AVAscraper(ContextDecorator):
         self.options = Options()
         self.TIMEOUT_TIME = 5
         self.TIMEOUT_TIME_LOGIN = 5
+        self.TIMEOUT_TIME_MENUTAB = 4
         self.debug = debug
 
         self.AVA_LOGIN_URL = "https://ava.uninove.br/seu/AVA/index.php"
@@ -98,31 +99,10 @@ class AVAscraper(ContextDecorator):
 
         return {'message': 'Login realizado com sucesso', 'code': True}
 
-    def findChannel(self):
-        print("Clicando em channel 9")
-        channel9XPATH = "/html/body/div[7]/div[6]/div[2]/div/div[3]/div/div[3]/div[1]/div[2]"
-        element = WebDriverWait(self.driver, self.TIMEOUT_TIME).until(
-            EC.presence_of_element_located((By.XPATH, channel9XPATH)))
-
-        self.driver.execute_script("arguments[0].click();", element)
-
-        print("Clicando em Atividade")
-        abaAtividade = self.driver.find_element_by_id("aba-atividade")
-        atividadeChildren = abaAtividade.find_element_by_xpath(
-            "/html/body/div[8]/div[6]/div[2]/div[1]/div[4]/div/div/ul/li[2]/a")
-        self.driver.execute_script("arguments[0].click();", atividadeChildren)
-
-        print("Verificando data de encerramento")
-        diasRestantesXPATH = "/html/body/div[8]/div[6]/div[2]/div/div[6]/div/div/div/div/div/div/div[2]/div[4]/div/div[2]/p"
-        element = WebDriverWait(self.driver, self.TIMEOUT_TIME).until(
-            EC.presence_of_element_located((By.XPATH, diasRestantesXPATH)))
-
-        return element
-
     def getMaterias(self):
-        """Get all user disciplines IDCurso, CodCurso and Name.
+        """Get all user disciplines IDCurso, CodCurso, Name and if it is online or on-site.
 
-        :returns: dictionary with discipline ID, Cod, and Name.
+        :returns: dictionary with discipline ID, Cod, Name and isOnline.
         :rtype: dict
 
         """
@@ -141,25 +121,40 @@ class AVAscraper(ContextDecorator):
         soup = BeautifulSoup(
             menuTodasMaterias.get_attribute('innerHTML'), "lxml")
 
-        materiasLista = list()
+        materiasLista = []
         materiasSoup = soup.find_all("div", {"idcurso": re.compile(r'.*')})
 
-        for materia in materiasSoup:
-            materiasLista.append({
-                'IDCurso': materia.get('idcurso'),
-                'CodCurso': materia.get('codigo'),
-                'Nome': materia.select('span')[1].string
-            })
+        try:
+            for materia in materiasSoup:
+                materiasLista.append({
+                    'IDCurso':
+                    materia.get('idcurso'),
+                    'CodCurso':
+                    materia.get('codigo'),
+                    'Name':
+                    materia.select('span.md')[0].string
+                })
+        except Exception as e:
+            print(e)
+
+        if self.debug:
+            print(materiasLista)
+
+        for materia in materiasLista:
+            if self.disciplineIsOnline(materia['IDCurso'],
+                                       materia['CodCurso']):
+                materia.update({'isOnline': True})
+            else:
+                materia.update({'isOnline': False})
 
         return materiasLista
 
-    def getAssignmentsAndForum(self, idCurso, codCurso):
-        """Go to desired discipline assignments page and gathers ones with due dates.
-        At the end, go back to main page.
+    def disciplineIsOnline(self, idCurso, codCurso):
+        """Enters inside discipline page, and checks if it has a Atividade tab.
 
         :param idCurso: ID of user discipline.
         :param codCurso: Cod of user discipline
-        :returns: Due dates of user assignments, including forum.
+        :returns: True if discipline has Atividade tab, False if not.
         :rtype: dict
 
         """
@@ -168,7 +163,7 @@ class AVAscraper(ContextDecorator):
         if self.driver.current_url != self.AVA_MAIN_URL:
             try:
                 self.driver.get(self.AVA_MAIN_URL)
-                WebDriverWait(self.driver, 5).until(
+                WebDriverWait(self.driver, self.TIMEOUT_TIME).until(
                     EC.presence_of_element_located((By.ID, 'frm-principal')))
             except WebDriverException:
                 pass
@@ -177,8 +172,9 @@ class AVAscraper(ContextDecorator):
 
         self._fillFormAndSubmit(idCurso, codCurso)
 
+        # checks if it is a discipline page
         try:
-            WebDriverWait(self.driver, 10).until(
+            WebDriverWait(self.driver, self.TIMEOUT_TIME).until(
                 EC.url_contains(('ferramentas')))
         except TimeoutException:
             raise
@@ -191,7 +187,83 @@ class AVAscraper(ContextDecorator):
                 soup = BeautifulSoup(titulo.get_attribute('innerHTML'), "lxml")
                 print(soup.find('p').string)
             except TimeoutError:
-                raise WrongPageError(u'Não achou elemento "titulo-disciplina".')
+                raise WrongPageError(
+                    u'Não achou elemento "titulo-disciplina".')
+
+        # checks if there is an Atividade tab to choose
+        try:
+            WebDriverWait(self.driver, self.TIMEOUT_TIME_MENUTAB).until(
+                EC.presence_of_element_located((By.ID, 'aba-atividade')))
+        except TimeoutException:
+            return False
+        return True
+
+    def getQuestionarios(self, idCurso, codCurso):
+        """Returns user assignments.
+        # TODO: foruns
+
+        :returns: name, status, days_left, type
+        :rtype: dictionary
+
+        """
+        print('oi')
+
+        # start at main page
+        try:
+            self.driver.get(self.AVA_MAIN_URL)
+            WebDriverWait(self.driver, self.TIMEOUT_TIME).until(
+                EC.presence_of_element_located((By.ID, 'frm-principal')))
+        except WebDriverException as e:
+            print(e)
+            pass
+        except TimeoutException as e:
+            raise WrongPageError(u'Não achou elemento "frm-principal".')
+
+        self._fillFormAndSubmit(idCurso, codCurso)
+
+        # checks if there is an Atividade tab to choose
+        try:
+            abaAtividade = WebDriverWait(
+                self.driver, self.TIMEOUT_TIME_MENUTAB).until(
+                    EC.presence_of_element_located((By.ID, 'aba-atividade')))
+
+            self.driver.execute_script("arguments[0].click();", abaAtividade)
+        except TimeoutException:
+            pass
+
+        # checar todos os filtro-conteudo e retirar as atividades abertas
+        atividadesSoup = None
+        try:
+            todosQuestionarios = WebDriverWait(
+                self.driver, self.TIMEOUT_TIME_MENUTAB).until(
+                    EC.presence_of_element_located((By.ID, 'div-conteudo')))
+
+            atividadesSoup = BeautifulSoup(
+                todosQuestionarios.get_attribute('innerHTML'), "lxml")
+        except TimeoutException:
+            pass
+
+        # parsing questionaries and forums
+        questionarios = atividadesSoup.find_all('div', {'tipo': '002'})
+        foruns = atividadesSoup.find_all('div', {'tipo': '003'})
+
+        questionariosList = []
+        for questionario in questionarios:
+            questionariosList.append({
+                'name':
+                re.sub('[\n\t]+', '',
+                       questionario.select('p.sm')[0].string),
+                'status':
+                questionario['status'],
+                'days_left':
+                re.sub('[A-z]+|[\s+]', '',
+                       questionario.select('span.RobotoLight')[0].string),
+                'type':
+                u'Questionário'
+            })
+
+        return questionariosList
+        # depois pegar seu nome, peso e data de termino
 
     def _fillFormAndSubmit(self, idCurso, codCurso):
         """Fill main page form and submits it.
