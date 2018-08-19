@@ -1,9 +1,14 @@
 ** TODO
 
-- task getAllAssignments deve entrar em todas as matérias do usuario e retornar
-  uma lista com o ID da matéria, código da matéria, nome
+   - A maioria dos problemas a serem resolvidos são para que se faça a atualização, caso ja exista. Isto serve para:
+     1. databaseRefreshAssignments: Caso a disciplina já exista, é necessário
+        checar se seu status mudou para encerrado, ou se o usuário completou a
+        atividade para deletá-la do banco.
+     2. databaseRefreshDisciplines: É necessário checar para novas disciplinas
+        somente, caso já exista não fazer nada.
 
-- emailSendConfirmation está usando um import de environment para fazer o
-  template do email, verificar depois se não causa erros
+   -
+   - emailSendConfirmation está usando um import de environment para fazer o
+     template do email, verificar depois se não causa erros
 
-- inserir controle de errro se o email já existir no bd
+   - inserir controle de erro se o email já existir no bd
