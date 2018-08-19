@@ -22,6 +22,7 @@ class Users(Base):
 
     profile = relationship('Profiles', backref='Users', cascade='all')
     assignments = relationship('Assignments', backref='Users', cascade='all')
+    disciplines = relationship('Disciplines', backref='Users', cascade='all')
 
     def __init__(self, email, nome, uninove_ra, uninove_senha):
         self.email = email
@@ -56,19 +57,31 @@ class Users(Base):
         return pbkdf2_sha256.verify(string, self.senha)
 
 
+class Disciplines(Base):
+    __tablename__ = 'Disciplines'
+
+    discipline_id = Column('DisciplineID', Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('Users.user_id'))
+    nome = Column('Name', String(60))
+    isOnline = Column('isOnline', Boolean)
+    idCurso = Column('IdCurso', Integer)
+    codCurso = Column('CodCurso', Integer)
+
+
 class Assignments(Base):
     __tablename__ = 'Assignments'
 
     user_id = Column(Integer, ForeignKey('Users.user_id'))
     assignment_id = Column(Integer, primary_key=True)
     name = Column('Name', String(80))
-    discipline = Column('Discipline', String(60))
+    discipline_id = Column('DisciplineID', Integer,
+                           ForeignKey('Disciplines.DisciplineID'))
 
     # tipo = questionario ou forum
     type = Column('Type', String(20))
 
     # time in days before assignment ends
-    dueDate = Column('Due_Date', Integer)
+    dueDate = Column('Due_Date', DateTime)
 
     @staticmethod
     def get():
