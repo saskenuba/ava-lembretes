@@ -19,7 +19,7 @@ DEBUG = True
 @celery.task()
 def databaseRefreshAssignments():
     """Refresh the whole database, logging in each user on AVA Platform,
-    gathers all disciplines with any assignment or forum with a due date,
+    only for online disiciplines and checks if user has a new assignment,
     then updates the database.
     """
 
@@ -86,15 +86,19 @@ def databaseRefreshDisciplines():
         # verificar se é a melhor maneira de fazê-lo, as matérias repetem-se para
         # todos os usuários
         for discipline in disciplineList:
-            novaDisciplina = Disciplines(user.user_id,
-                                         str.title(discipline['Name']),
-                                         discipline['isOnline'],
-                                         discipline['IDCurso'],
-                                         discipline['CodCurso'])
-            db_session.add(novaDisciplina)
-        db_session.commit()
-        print('-- End of user --')
-        print()
+
+            currentDiscipline = Disciplines.query.filter(
+                Disciplines.idCurso == discipline['IDCurso']).first()
+            # if discipline doesnt exists, then insert and associate user
+            if currentDiscipline is None:
+                currentDiscipline = Disciplines(user.user_id,
+                                                str.title(discipline['Name']),
+                                                discipline['isOnline'],
+                                                discipline['IDCurso'],
+                                                discipline['CodCurso'])
+            currentDiscipline.users.append(user)
+            db_session.add(currentDiscipline)
+            db_session.commit()
 
     return 'done'
 

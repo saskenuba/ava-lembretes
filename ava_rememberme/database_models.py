@@ -2,8 +2,8 @@ import datetime
 
 from passlib.hash import pbkdf2_sha256
 from sqlalchemy import (JSON, Boolean, Column, DateTime, ForeignKey, Integer,
-                        String, Text)
-from sqlalchemy.orm import relationship
+                        String, Text, Table)
+from sqlalchemy.orm import relationship, backref
 
 from ava_rememberme.database import Base
 from ava_rememberme.exceptions import AssignmentExpired
@@ -20,9 +20,9 @@ class Users(Base):
     active = Column(Boolean, default=False)
     confirmed_at = Column(DateTime, nullable=True)
 
+    # one to one
+    # user has one profile
     profile = relationship('Profiles', backref='Users', cascade='all')
-    assignments = relationship('Assignments', backref='Users', cascade='all')
-    disciplines = relationship('Disciplines', backref='Users', cascade='all')
 
     def __init__(self, email, nome, uninove_ra, uninove_senha):
         self.email = email
@@ -57,15 +57,27 @@ class Users(Base):
         return pbkdf2_sha256.verify(string, self.senha)
 
 
+users_disciplines = Table(
+    'Users_Disciplines', Base.metadata,
+    Column('StudentID', Integer, ForeignKey('Users.user_id')),
+    Column('DisciplineID', Integer, ForeignKey('Disciplines.DisciplineID')))
+
+
 class Disciplines(Base):
     __tablename__ = 'Disciplines'
 
     discipline_id = Column('DisciplineID', Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('Users.user_id'))
     name = Column('Name', String(60))
     isOnline = Column('isOnline', Boolean)
     idCurso = Column('IdCurso', Integer)
     codCurso = Column('CodCurso', Integer)
+
+    # relationships
+    # one discipline has many assignments
+    assignments = relationship(
+        'Assignments', backref='Disciplines', cascade='all')
+    users = relationship(
+        'Users', secondary=users_disciplines, backref='Disciplines')
 
     def __init__(self, user_id, name, isOnline, idCurso, codCurso):
         self.user_id = user_id
@@ -82,17 +94,19 @@ class Disciplines(Base):
 class Assignments(Base):
     __tablename__ = 'Assignments'
 
-    user_id = Column(Integer, ForeignKey('Users.user_id'))
     assignment_id = Column(Integer, primary_key=True)
-    name = Column('Name', String(80))
     discipline_id = Column('DisciplineID', Integer,
                            ForeignKey('Disciplines.DisciplineID'))
+    name = Column('Name', String(80))
 
     # tipo = questionario ou forum
     type = Column('Type', String(20))
 
     # time in days before assignment ends
     dueDate = Column('Due_Date', DateTime)
+
+    # many to many
+    # multiple users can have multiple assignments
 
     def __init__(self, user_id, name, discipline_id, type, dueDate):
         "docstring"
@@ -121,8 +135,8 @@ class Assignments(Base):
 class Profiles(Base):
     __tablename__ = 'Profiles'
 
-    user_id = Column(Integer, ForeignKey('Users.user_id'))
     profile_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('Users.user_id'))
     register_date = Column(DateTime, default=datetime.datetime.now)
 
     def __init__(self, user_id):
