@@ -11,14 +11,24 @@ result_backend = 'redis://'
 
 # Timezone
 timezone = 'America/Sao_Paulo'
+""" There are mainly three activities that should happen.
+
+Refresh disciplines: Once per month should be sufficient for checking
+if a user has a new discipline. Note that this is very rare.
+
+Refresh assignments: Once per week or Once in two weeks to save some
+processing.
+
+Check due dates: This should happen once per day, since it is the main
+pourpose of this app. :)
+
+"""
 
 beat_schedule = {
-    'refresh-all-users': {
-        'task': 'ava_rememberme.tasks.databaseRefreshAllUsers',
-        'schedule': crontab(day_of_month='10,20,30'),
-    },
-    'subtract-day': {
-        'task': 'ava_rememberme.tasks.databaseSubtractDay',
-        'schedule': crontab(minute='59', hour='23'),
+    'refresh-disciplines': {
+        'task':
+        'ava_rememberme.tasks.databaseRefreshDisciplines',
+        'schedule':
+        crontab(minute='0', hour='3', day_of_month='1-7', day_of_week='0')
     }
 }
