@@ -206,8 +206,6 @@ class AVAscraper(ContextDecorator):
         :rtype: dictionary
 
         """
-        print('oi')
-
         # start at main page
         try:
             self.driver.get(self.AVA_MAIN_URL)
@@ -253,6 +251,8 @@ class AVAscraper(ContextDecorator):
                 'name':
                 re.sub('[\n\t]+', '',
                        questionario.select('p.sm')[0].string),
+                'codigo':
+                questionario['codigo'],
                 'status':
                 questionario['status'],
                 'days_left':

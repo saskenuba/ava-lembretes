@@ -2,8 +2,10 @@ import datetime
 
 from passlib.hash import pbkdf2_sha256
 from sqlalchemy import (JSON, Boolean, Column, DateTime, ForeignKey, Integer,
-                        String, Text, Table)
-from sqlalchemy.orm import relationship, backref
+                        String, Table, Text)
+from sqlalchemy.schema import Index
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import backref, relationship
 
 from ava_rememberme.database import Base
 from ava_rememberme.exceptions import AssignmentExpired
@@ -23,6 +25,13 @@ class Users(Base):
     # one to one
     # user has one profile
     profile = relationship('Profiles', backref='Users', cascade='all')
+
+    # association proxy of "user_keywords" collection
+    # to "keyword" attribute
+    assignments = association_proxy(
+        'user_assignments',
+        'assignments',
+        creator=lambda assignments: Users_Assignments(assignments=assignments[0], userCompleted=assignments[1]))
 
     def __init__(self, email, nome, uninove_ra, uninove_senha):
         self.email = email
@@ -63,6 +72,30 @@ users_disciplines = Table(
     Column('DisciplineID', Integer, ForeignKey('Disciplines.DisciplineID')))
 
 
+class Users_Assignments(Base):
+    __tablename__ = 'Users_Assignments'
+
+    user_id = Column(Integer, ForeignKey('Users.user_id'), primary_key=True)
+    assignment_id = Column(
+        Integer, ForeignKey('Assignments.assignment_id'), primary_key=True)
+    userCompleted = Column('UserCompleted', Boolean, nullable=False)
+
+    #Index('idx_user_assignment', 'user_id', 'assignment_id')
+
+    # bidirectional attribute/collection of "user"/"user_assignments"
+    users = relationship(
+        'Users',
+        backref=backref("user_assignments", cascade="all, delete-orphan"))
+
+    def __init__(self, assignments=None, userCompleted=False):
+        "docstring"
+        self.assignments = assignments
+        self.userCompleted = userCompleted
+
+    # reference to the "Assignments" object
+    assignments = relationship("Assignments")
+
+
 class Disciplines(Base):
     __tablename__ = 'Disciplines'
 
@@ -87,7 +120,7 @@ class Disciplines(Base):
         self.codCurso = codCurso
 
     def __repr__(self):
-        return u'Disciplina: {} ID {}, Online: {}'.format(
+        return u'Disciplina: {} - ID {} - Online: {}'.format(
             self.name, self.discipline_id, self.isOnline)
 
 
@@ -98,6 +131,7 @@ class Assignments(Base):
     discipline_id = Column('DisciplineID', Integer,
                            ForeignKey('Disciplines.DisciplineID'))
     name = Column('Name', String(80))
+    codigo = Column('Codigo', Integer, index=True)
 
     # tipo = questionario ou forum
     type = Column('Type', String(20))
@@ -108,10 +142,10 @@ class Assignments(Base):
     # many to many
     # multiple users can have multiple assignments
 
-    def __init__(self, user_id, name, discipline_id, type, dueDate):
+    def __init__(self, name, codigo, discipline_id, type, dueDate):
         "docstring"
-        self.user_id = user_id
         self.name = name
+        self.codigo = codigo
         self.discipline_id = discipline_id
         self.type = type
         self.dueDate = dueDate

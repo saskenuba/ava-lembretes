@@ -35,26 +35,35 @@ def databaseRefreshAssignments():
             continue
 
         onlineDisciplines = [
-            discipline for discipline in user.disciplines
+            discipline for discipline in user.Disciplines
             if discipline.isOnline is True
         ]
 
-        assignmentList = None
-        result = getUserAssignments.apply_async(
+        userAssignments = getUserAssignments.apply_async(
             (user.uninove_ra, user.uninove_senha, onlineDisciplines[0].idCurso,
              onlineDisciplines[0].codCurso))
 
+        assignmentList = None
         with allow_join_result():
-            assignmentList = result.get()
+            assignmentList = userAssignments.get()
 
         for assignment in assignmentList:
-            newAssignment = Assignments(user.user_id, assignment['name'],
-                                        onlineDisciplines[0].discipline_id,
-                                        assignment['type'],
-                                        assignment['days_left'])
-            db_session.add(newAssignment)
-        db_session.commit()
+            currentAssignment = Assignments.query.filter(
+                Assignments.codigo == assignment['codigo']).first()
 
+            # caso não exista, crie um assignment
+            if currentAssignment is None:
+                currentAssignment = Assignments(
+                    assignment['name'], assignment['codigo'],
+                    onlineDisciplines[0].discipline_id, assignment['type'],
+                    assignment['days_left'])
+
+            # independente, associe à um usuário, e somente se aberta
+            user.assignments.append([currentAssignment, True])
+            db_session.add(currentAssignment)
+            print('inseriu')
+
+        db_session.commit()
     return 'done'
 
 
@@ -83,8 +92,6 @@ def databaseRefreshDisciplines():
         with allow_join_result():
             disciplineList = result.get()
 
-        # verificar se é a melhor maneira de fazê-lo, as matérias repetem-se para
-        # todos os usuários
         for discipline in disciplineList:
 
             currentDiscipline = Disciplines.query.filter(
