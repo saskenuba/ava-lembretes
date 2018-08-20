@@ -34,6 +34,10 @@ def databaseRefreshAssignments():
         if not user.isActive():
             continue
 
+        # if user doesnt has any discipline
+        if user.Disciplines is None or not user.Disciplines:
+            continue
+
         onlineDisciplines = [
             discipline for discipline in user.Disciplines
             if discipline.isOnline is True
@@ -59,7 +63,7 @@ def databaseRefreshAssignments():
                     assignment['days_left'])
 
             # independente, associe à um usuário, e somente se aberta
-            user.assignments.append([currentAssignment, True])
+            user.assignments.append([currentAssignment, assignment['status']])
             db_session.add(currentAssignment)
             print('inseriu')
 
@@ -108,6 +112,30 @@ def databaseRefreshDisciplines():
             db_session.commit()
 
     return 'done'
+
+
+@celery.task()
+def databaseSendDueDates():
+    """FIXME! briefly describe function
+
+    :returns:
+    :rtype:
+
+    """
+
+    from .database_models import Users
+
+    allUsers = Users.get()
+
+    for user in allUsers:
+
+        # skip cycle if user not confirmed
+        if not user.isActive():
+            continue
+
+        for assignment in user.assignments:
+            print(assignment)
+        print()
 
 
 @celery.task()
@@ -206,10 +234,11 @@ def emailSendConfirmation(userEmail, userName, secret):
 @celery.task()
 def emailSendDueDates(userEmail, userName, secret, materias):
     """
-    Send email with all user due dates.
 
     :param userEmail: string with user email.
     :param userName: string with user name.
+    :param secret: flask config secret
+    :param materias:
     :returns:
     :rtype:
 

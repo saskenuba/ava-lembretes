@@ -31,11 +31,11 @@ class Users(Base):
     assignments = association_proxy(
         'user_assignments',
         'assignments',
-        creator=lambda assignments: Users_Assignments(assignments=assignments[0], userCompleted=assignments[1]))
+        creator=lambda assignments: Users_Assignments(assignments=assignments[0], status=assignments[1]))
 
     def __init__(self, email, nome, uninove_ra, uninove_senha):
         self.email = email
-        self.nome = nome
+        self.nome = str.title(nome)
         self.uninove_ra = uninove_ra
         self.uninove_senha = uninove_senha
 
@@ -78,22 +78,33 @@ class Users_Assignments(Base):
     user_id = Column(Integer, ForeignKey('Users.user_id'), primary_key=True)
     assignment_id = Column(
         Integer, ForeignKey('Assignments.assignment_id'), primary_key=True)
-    userCompleted = Column('UserCompleted', Boolean, nullable=False)
-
-    #Index('idx_user_assignment', 'user_id', 'assignment_id')
+    status = Column('Status', Integer)
 
     # bidirectional attribute/collection of "user"/"user_assignments"
     users = relationship(
         'Users',
         backref=backref("user_assignments", cascade="all, delete-orphan"))
 
-    def __init__(self, assignments=None, userCompleted=False):
+    # reference to the "Assignments" object
+    assignments = relationship("Assignments", backref='user_assignments')
+
+    def __init__(self, assignments=None, status=False):
         "docstring"
         self.assignments = assignments
-        self.userCompleted = userCompleted
+        self.status = self._formatStatus(status)
 
-    # reference to the "Assignments" object
-    assignments = relationship("Assignments")
+    # 1 = aberta, 2 = encerrada, 3 = agendada, 4 = ?
+    def _formatStatus(self, unformatedStatus):
+        unformatedStatus = str.lower(unformatedStatus)
+
+        if unformatedStatus == 'aberto' or unformatedStatus == 'aberta':
+            return 1
+        elif unformatedStatus == 'encerrada' or unformatedStatus == 'encerrado':
+            return 2
+        elif unformatedStatus == 'agendada' or unformatedStatus == 'agendado':
+            return 3
+        else:
+            raise Exception('Unknown status')
 
 
 class Disciplines(Base):
@@ -139,13 +150,11 @@ class Assignments(Base):
     # time in days before assignment ends
     dueDate = Column('Due_Date', DateTime)
 
-    # many to many
-    # multiple users can have multiple assignments
-
-    def __init__(self, name, codigo, discipline_id, type, dueDate):
+    def __init__(self, name, codigo, status, discipline_id, type, dueDate):
         "docstring"
         self.name = name
         self.codigo = codigo
+        self.status = self._formatStatus(status)
         self.discipline_id = discipline_id
         self.type = type
         self.dueDate = dueDate
@@ -155,8 +164,8 @@ class Assignments(Base):
         return Assignments.query.all()
 
     def __repr__(self):
-        return u'{} ID {}, Usuário {}, Dias Restantes: {}'.format(
-            self.type, self.assignment_id, self.user_id, self.dueDate)
+        return u'{} ID {}, Data limite: {}'.format(
+            self.type, self.assignment_id, self.dueDate)
 
     @property
     def daysLeft(self):
