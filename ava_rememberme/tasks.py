@@ -16,9 +16,10 @@ from .mail import Mailgun
 
 EMAIL_TEMPLATE_LOCATION = "/home/martin/Documentos/Programming/Python/Projetos/Uninove-RememberMe/ava_rememberme/templates/email/"
 EMAIL_DOMAIN = "mg.martinmariano.com"
-DEBUG = True
+DEBUG = False
 
 logger = get_task_logger(__name__)
+
 
 @celery.task(ignore_result=True)
 def databaseRefreshAssignments():
@@ -69,7 +70,6 @@ def databaseRefreshAssignments():
             # independente, associe à um usuário, e somente se aberta
             user.assignments.append([currentAssignment, assignment['status']])
             db_session.add(currentAssignment)
-            print('inseriu')
 
         db_session.commit()
     return 'done'
@@ -96,7 +96,8 @@ def databaseRefreshDisciplines():
 
         disciplineList = None
         result = getAllDisciplines.apply_async((user.uninove_ra,
-                                                user.uninove_senha, Users.getIDcursoList(user)))
+                                                user.uninove_senha,
+                                                Users.getIDcursoList(user)))
         with allow_join_result():
             disciplineList = result.get()
 
@@ -122,9 +123,9 @@ def databaseRefreshDisciplines():
     return 'done'
 
 
-@celery.task()
+@celery.task(ignore_result=True)
 def databaseSendDueDates():
-    """FIXME! briefly describe function
+    """Send email with user assignments that meet the day requirements.
 
     :returns:
     :rtype:
@@ -134,6 +135,7 @@ def databaseSendDueDates():
     from .database_models import Users
 
     allUsers = Users.get()
+    DAYS_TO_REMEMBER = [30, 15, 7, 3, 2, 1]
 
     for user in allUsers:
 
@@ -141,9 +143,20 @@ def databaseSendDueDates():
         if not user.isActive():
             continue
 
-        for assignment in user.assignments:
-            print(assignment)
-        print()
+        materias = Users.getAssignments(user, status=1)
+
+        # if any user assignment meets day requirements, shoot email and iterates to next user
+        try:
+            for index, materia in materias.items():
+                for assignment in materia:
+                    print(assignment)
+                    if assignment['dias'] in DAYS_TO_REMEMBER:
+                        emailSendDueDates.apply_async(
+                            (user.email, user.nome,
+                             current_app.config['SECRET_KEY'], materias))
+                        raise StopIteration
+        except StopIteration:
+            continue
 
 
 @celery.task()
@@ -163,7 +176,7 @@ def registerUserChecker(uninove_ra, uninove_senha):
             scraper.loginAva()
         except LoginError as e:
             return (False, e.msg)
-        return (True,)
+        return (True, )
 
 
 @celery.task()

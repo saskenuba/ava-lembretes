@@ -11,6 +11,3 @@
 
      2. databaseRefreshDisciplines: Seria legal saber o que acontece quando a
         mesma matéria é online para um e presencial para outro.
-
-   - emailSendConfirmation está usando um import de environment para fazer o
-     template do email, verificar depois se não causa erros
