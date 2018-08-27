@@ -1,9 +1,14 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
+        {% set materiasLength = materias | length %}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>Você possui {{ materias | length }} atividades pendentes.</title>
+        {% trans materiasLength %}
+        <title>Você possui {{ materiasLength }} atividade pendente.</title>
+        {% pluralize %}
+        <title>Você possui {{ materiasLength }} atividades pendentes.</title>
+        {% endtrans %}
         <!--
              The style block is collapsed on page load to save you some scrolling.
              Postmark automatically inlines all CSS properties for maximum email client
@@ -396,7 +401,11 @@
         </style>
     </head>
     <body>
-        <span class="preheader">Este é um lembrete automático. Você possui {{ materias | length }} atividades.</span>
+        {% trans materiasLength %}
+        <span class="preheader">Este é um lembrete automático. Você possui {{ materiasLength }} atividade.</span>
+        {% pluralize %}
+        <span class="preheader">Este é um lembrete automático. Você possui {{ materiasLength }} atividades.</span>
+        {% endtrans %}
         <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td align="center">
@@ -417,15 +426,21 @@
                                     <tr>
                                         <td class="content-cell">
                                             <h1>Olá {{ userName }},</h1>
-                                            <p>Detectamos {{ materias | length }} atividades no AVA que você ainda não fez.</p>
-                                            <p>Segundo nossas estatísticas, 100% dos alunos que não veem as atividades, deixam de fazê-las.</p>
+                                            {% trans materiasLength %}
+                                            <p>Detectamos {{ materiasLength }} atividade no AVA que você ainda não fez.</p>
+                                            {% pluralize %}
+                                            <p>Detectamos {{ materiasLength }} atividades no AVA que você ainda não fez.</p>
+                                            {% endtrans %}
+                                            <p>Segundo nossas estatísticas, 100% dos alunos que não veem as atividades, deixam de fazê-las. :)</p>
 
                                             <!-- Action -->
                                             {% for index, materia in materias.items() %}
                                                 <table class="purchase" width="100%" cellpadding="0" cellspacing="0">
                                                     <thead>
                                                         <tr>
-                                                            <th class="purchase_mainTitle" colspan="3">{{ index }}</th>
+                                                            <th class="purchase_mainTitle" colspan="3">
+                                                                <h2 class="align-center">{{ index }}</h2>
+                                                            </th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -462,7 +477,7 @@
                                                     <tr>
                                                         <td>
                                                             <p class="sub">Se você deseja se descadastrar do serviço, basta clicar no link abaixo, ou copiar e colá-lo em seu navegador.</p>
-                                                            <p class="sub">{{action_url}}</p>
+                                                            <p class="sub">{{ action_url }}</p>
                                                         </td>
                                                     </tr>
                                                 </table>
