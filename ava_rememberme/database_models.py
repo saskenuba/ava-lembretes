@@ -88,7 +88,7 @@ class Users(Base):
         """
 
         materias = collections.defaultdict(list)
-        # para cada assignment que tem a mesma materia
+        # for each assignment that has the same discipline in commom
         for assignment in user.user_assignments:
 
             # only shows ABERTO
@@ -133,16 +133,18 @@ class Users_Assignments(Base):
         self.assignments = assignments
         self.status = self._formatStatus(status)
 
-    # 1 = aberta, 2 = encerrada, 3 = agendada, 4 = ?
+    # 1 = aberta, 2 = encerrada, 3 = agendada, 4 = corrigida, 5 = ?
     def _formatStatus(self, unformatedStatus):
-        unformatedStatus = str.lower(unformatedStatus)
+        status = str.lower(unformatedStatus)
 
-        if unformatedStatus == 'aberto' or unformatedStatus == 'aberta':
+        if status == 'aberto' or status == 'aberta':
             return 1
-        elif unformatedStatus == 'encerrada' or unformatedStatus == 'encerrado':
+        elif status == 'encerrada' or status == 'encerrado':
             return 2
-        elif unformatedStatus == 'agendada' or unformatedStatus == 'agendado':
+        elif status == 'agendada' or status == 'agendado':
             return 3
+        elif status == 'corrigida' or status == 'corrigido':
+            return 4
         else:
             raise Exception('Unknown status')
 
@@ -190,11 +192,10 @@ class Assignments(Base):
     # time in days before assignment ends
     dueDate = Column('Due_Date', DateTime)
 
-    def __init__(self, name, codigo, status, discipline_id, type, dueDate):
+    def __init__(self, name, codigo, discipline_id, type, dueDate):
         "docstring"
         self.name = name
         self.codigo = codigo
-        self.status = self._formatStatus(status)
         self.discipline_id = discipline_id
         self.type = type
         self.dueDate = dueDate
