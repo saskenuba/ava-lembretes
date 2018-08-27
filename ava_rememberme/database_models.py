@@ -1,11 +1,12 @@
+import collections
 import datetime
 
 from passlib.hash import pbkdf2_sha256
 from sqlalchemy import (JSON, Boolean, Column, DateTime, ForeignKey, Integer,
                         String, Table, Text)
-from sqlalchemy.schema import Index
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref, relationship
+from sqlalchemy.schema import Index
 
 from ava_rememberme.database import Base
 from ava_rememberme.exceptions import AssignmentExpired
@@ -64,6 +65,45 @@ class Users(Base):
     @staticmethod
     def hashVerify(self, string):
         return pbkdf2_sha256.verify(string, self.senha)
+
+    @staticmethod
+    def getIDcursoList(user):
+        """Returns all user disciplines idCurso as a list
+
+        :returns:
+        :rtype:
+
+        """
+        return [x.idCurso for x in user.Disciplines]
+
+    @staticmethod
+    def getAssignments(user, status=None):
+        """Returns all user assignments in a dict, where each key is a discipline.
+
+        :param user: Users object
+        :param status: status code to filter
+        :returns: dictionary with keys: tipo, nome, dias
+        :rtype: dictionary
+
+        """
+
+        materias = collections.defaultdict(list)
+        # para cada assignment que tem a mesma materia
+        for assignment in user.user_assignments:
+
+            # only shows ABERTO
+            if assignment.status == status or status is None:
+
+                materias[assignment.assignments.Disciplines.name].append({
+                    'tipo':
+                    assignment.assignments.type,
+                    'nome':
+                    assignment.assignments.name,
+                    'dias':
+                    assignment.assignments.daysLeft
+                })
+
+        return materias
 
 
 users_disciplines = Table(

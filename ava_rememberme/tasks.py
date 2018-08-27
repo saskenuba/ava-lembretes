@@ -1,13 +1,16 @@
+import datetime
 import json
 import os
-import datetime
 
+from celery import current_task
 from celery.result import allow_join_result
+from celery.utils.log import get_task_logger
 from flask import current_app, url_for
 from itsdangerous import URLSafeSerializer, URLSafeTimedSerializer
 
 from ava_rememberme import celery
 
+from .engine.exceptions import LoginError
 from .exceptions import AssignmentExpired
 from .mail import Mailgun
 
@@ -15,8 +18,9 @@ EMAIL_TEMPLATE_LOCATION = "/home/martin/Documentos/Programming/Python/Projetos/U
 EMAIL_DOMAIN = "mg.martinmariano.com"
 DEBUG = True
 
+logger = get_task_logger(__name__)
 
-@celery.task()
+@celery.task(ignore_result=True)
 def databaseRefreshAssignments():
     """Refresh the whole database, logging in each user on AVA Platform,
     only for online disiciplines and checks if user has a new assignment,
@@ -71,7 +75,7 @@ def databaseRefreshAssignments():
     return 'done'
 
 
-@celery.task()
+@celery.task(ignore_result=True)
 def databaseRefreshDisciplines():
     """Refresh the whole database, logging in each user on AVA Platform,
     gathers all disciplines with any assignment or forum with a due date,
@@ -92,9 +96,13 @@ def databaseRefreshDisciplines():
 
         disciplineList = None
         result = getAllDisciplines.apply_async((user.uninove_ra,
-                                                user.uninove_senha))
+                                                user.uninove_senha, Users.getIDcursoList(user)))
         with allow_join_result():
             disciplineList = result.get()
+
+        # user with error on login, or if no new disciplines are found
+        if not disciplineList:
+            continue
 
         for discipline in disciplineList:
 
@@ -144,15 +152,18 @@ def registerUserChecker(uninove_ra, uninove_senha):
 
     :param uninove_ra: string
     :param uninove_senha: string
-    :returns: dict
+    :returns: tuple, [0] True or False, [1] message
 
     """
     from .engine import AVAscraper
     with AVAscraper(debug=DEBUG) as scraper:
         scraper.uninove_ra = uninove_ra
         scraper.uninove_senha = uninove_senha
-        result = scraper.loginAva()
-        return result
+        try:
+            scraper.loginAva()
+        except LoginError as e:
+            return (False, e.msg)
+        return (True,)
 
 
 @celery.task()
@@ -180,21 +191,24 @@ def getUserAssignments(uninove_ra, uninove_senha, idCurso, codCurso):
 
 
 @celery.task()
-def getAllDisciplines(uninove_ra, uninove_senha):
+def getAllDisciplines(uninove_ra, uninove_senha, userDisciplines=False):
     """Get all users disciplines and checks if they are on-site or online.
 
     :param uninove_ra: string, user RA
     :param uninove_senha:string, user AVA password
-    :returns:
-    :rtype:
+    :returns: List with all users disciplines, False if there was a login error.
+    :rtype: list
 
     """
     from .engine import AVAscraper
     with AVAscraper(debug=DEBUG) as scraper:
         scraper.uninove_ra = uninove_ra
         scraper.uninove_senha = uninove_senha
-        scraper.loginAva()
-        materiasList = scraper.getMaterias()
+        try:
+            scraper.loginAva()
+        except LoginError as e:
+            return False
+        materiasList = scraper.getMaterias(userDisciplines)
         return materiasList
 
 

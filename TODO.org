@@ -1,14 +1,16 @@
 ** TODO
 
+   - Lembrar de que quando o usuario se cadastrar, É NECESSARIO que se puxe as
+      matérias, se não meio que perde-se o sentido do negocio, hehe
+
    - A maioria dos problemas a serem resolvidos são para que se faça a atualização, caso ja exista. Isto serve para:
+
      1. databaseRefreshAssignments: Caso a disciplina já exista, é necessário
         checar se seu status mudou para encerrado, ou se o usuário completou a
         atividade para deletá-la do banco.
-     2. databaseRefreshDisciplines: É necessário checar para novas disciplinas
-        somente, caso já exista não fazer nada.
 
-   -
+     2. databaseRefreshDisciplines: Seria legal saber o que acontece quando a
+        mesma matéria é online para um e presencial para outro.
+
    - emailSendConfirmation está usando um import de environment para fazer o
      template do email, verificar depois se não causa erros
-
-   - inserir controle de erro se o email já existir no bd

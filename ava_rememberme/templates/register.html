@@ -61,6 +61,18 @@
                 {% endfor %}
             </ul>
         </div>
+    {% endif %} {% endwith %} {% with messages = get_flashed_messages(category_filter=["integrity"]) %} {% if messages %}
+        <div class="ui negative message">
+            <i class="close icon"></i>
+            <div class="header">
+                Ops, ocorreu um erro.
+            </div>
+            <ul class="list">
+                {% for key, message in messages[0].items() %}
+                    <li>{{ message[0] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
     {% endif %} {% endwith %}
 
 <div class="privacidade">

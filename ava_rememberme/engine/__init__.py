@@ -91,21 +91,21 @@ class AVAscraper(ContextDecorator):
         try:
             WebDriverWait(self.driver, self.TIMEOUT_TIME_LOGIN).until(
                 EC.url_contains(('principal')))
-        except TimeoutException:
-            return {
-                'message': self.driver.find_element_by_id('lb_conteudo').text,
-                'code': False
-            }
+        # something wrong happened on AVA platform
+        except TimeoutException as e:
+            raise LoginError(
+                self.driver.find_element_by_id('lb_conteudo').text)
 
-        return {'message': 'Login realizado com sucesso', 'code': True}
-
-    def getMaterias(self):
+    def getMaterias(self, userDisciplines=False):
         """Get all user disciplines IDCurso, CodCurso, Name and if it is online or on-site.
 
+        :param userDisciplines: dictionary if user already has disciplines.
         :returns: dictionary with discipline ID, Cod, Name and isOnline.
         :rtype: dict
 
         """
+        if self.debug:
+            print(userDisciplines)
 
         try:
             WebDriverWait(self.driver, 5).until(
@@ -124,18 +124,22 @@ class AVAscraper(ContextDecorator):
         materiasLista = []
         materiasSoup = soup.find_all("div", {"idcurso": re.compile(r'.*')})
 
-        try:
-            for materia in materiasSoup:
+        for materia in materiasSoup:
+            idCurso = int(materia.get('idcurso'))
+            codCurso = materia.get('codigo')
+            disciplineName = materia.select('span.md')[0].string
+
+            if self.debug:
+                print(idCurso)
+                print(userDisciplines)
+                print(idCurso in userDisciplines)
+
+            if idCurso not in userDisciplines:
                 materiasLista.append({
-                    'IDCurso':
-                    materia.get('idcurso'),
-                    'CodCurso':
-                    materia.get('codigo'),
-                    'Name':
-                    materia.select('span.md')[0].string
+                    'IDCurso': idCurso,
+                    'CodCurso': codCurso,
+                    'Name': disciplineName
                 })
-        except Exception as e:
-            print(e)
 
         if self.debug:
             print(materiasLista)
@@ -230,16 +234,15 @@ class AVAscraper(ContextDecorator):
             pass
 
         # checar todos os filtro-conteudo e retirar as atividades abertas
-        atividadesSoup = None
         try:
             todosQuestionarios = WebDriverWait(
                 self.driver, self.TIMEOUT_TIME_MENUTAB).until(
                     EC.presence_of_element_located((By.ID, 'div-conteudo')))
-
-            atividadesSoup = BeautifulSoup(
-                todosQuestionarios.get_attribute('innerHTML'), "lxml")
         except TimeoutException:
             pass
+
+        atividadesSoup = BeautifulSoup(
+            todosQuestionarios.get_attribute('innerHTML'), "lxml")
 
         # parsing questionaries and forums
         questionarios = atividadesSoup.find_all('div', {'tipo': '002'})
@@ -301,22 +304,5 @@ class AVAscraper(ContextDecorator):
         Closes driver.
         """
         # AVAscraperFactory.pushInstance(self)
-        self.driver.quit()
-        return self
-
-
-class Discipline(ContextDecorator):
-    def __init__(self, idCurso, codCurso):
-        "docstring"
-        self.idCurso = idCurso
-        self.codCurso = codCurso
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        """
-        Closes driver.
-        """
         self.driver.quit()
         return self
