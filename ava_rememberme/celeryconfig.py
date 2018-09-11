@@ -9,6 +9,11 @@ broker_url = 'redis://localhost'
 # Using the database to store task state and results.
 result_backend = 'redis://'
 
+# Using pickle because it supports serializing datetime objects
+accept_content = ['pickle']
+task_serializer = 'pickle'
+result_serializer = 'pickle'
+
 # Timezone
 timezone = 'America/Sao_Paulo'
 """ There are mainly three activities that should happen.
