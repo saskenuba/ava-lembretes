@@ -1,3 +1,6 @@
+"-*- coding: utf-8 -*-"
+
+import datetime
 import logging
 import re
 import traceback
@@ -31,8 +34,8 @@ class AVAscraperFactory:
         :returns: AVAscraper instance.
 
         """
-        if len(cls._values
-               ) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
+        if len(cls.
+               _values) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
             cls._values.append(AVAscraper(debug=debug))
             cls._CURRENT_INSTANCES += 1
 
@@ -210,6 +213,10 @@ class AVAscraper(ContextDecorator):
         :rtype: dictionary
 
         """
+
+        if self.debug:
+            print('Página principal..')
+
         # start at main page
         try:
             self.driver.get(self.AVA_MAIN_URL)
@@ -223,6 +230,9 @@ class AVAscraper(ContextDecorator):
 
         self._fillFormAndSubmit(idCurso, codCurso)
 
+        if self.debug:
+            print('Página de matéria EAD')
+
         # checks if there is an Atividade tab to choose
         try:
             abaAtividade = WebDriverWait(
@@ -233,7 +243,11 @@ class AVAscraper(ContextDecorator):
         except TimeoutException:
             pass
 
+        if self.debug:
+            print('TAB de atividade')
+
         # checar todos os filtro-conteudo e retirar as atividades abertas
+        todosQuestionarios = None
         try:
             todosQuestionarios = WebDriverWait(
                 self.driver, self.TIMEOUT_TIME_MENUTAB).until(
@@ -250,6 +264,7 @@ class AVAscraper(ContextDecorator):
 
         questionariosList = []
         for questionario in questionarios:
+
             questionariosList.append({
                 'name':
                 re.sub('[\n\t]+', '',
@@ -259,14 +274,40 @@ class AVAscraper(ContextDecorator):
                 'status':
                 questionario['status'],
                 'days_left':
-                re.sub('[A-z]+|[\s+]', '',
-                       questionario.select('span.RobotoLight')[0].string),
+                re.search('[\d]+',
+                          questionario.select('span.RobotoLight')[0].string).
+                group(0),
                 'type':
                 u'Questionário'
             })
 
-        return questionariosList
+        if self.debug:
+            print('Questionarios: ')
+            print(questionariosList)
+
+        formattedAssignments = self._formatAssignments(questionariosList)
+
+        return formattedAssignments
         # depois pegar seu nome, peso e data de termino
+
+    def _formatAssignments(self, assignmentList):
+        """Formats datetime of assignment based on status.
+
+        :param assignmentList:
+        :returns: dictionary with keys: name, codigo, status, days_left and type.
+        :rtype: dictionary
+
+        """
+
+        for tarefa in assignmentList:
+            if tarefa['status'] == 'corrigida' or tarefa[
+                    'status'] == 'corrigido':
+                tarefa['days_left'] = datetime.datetime.now(
+                ) - datetime.timedelta(days=int(tarefa['days_left']))
+            else:
+                tarefa['days_left'] = datetime.datetime.now(
+                ) + datetime.timedelta(days=int(tarefa['days_left']))
+        return assignmentList
 
     def _fillFormAndSubmit(self, idCurso, codCurso):
         """Fill main page form and submits it.

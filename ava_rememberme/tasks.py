@@ -1,3 +1,5 @@
+"-*- coding: utf-8 -*-"
+
 import datetime
 import json
 import os
@@ -16,12 +18,12 @@ from .mail import Mailgun
 
 EMAIL_TEMPLATE_LOCATION = "/home/martin/Documentos/Programming/Python/Projetos/Uninove-RememberMe/ava_rememberme/templates/email/"
 EMAIL_DOMAIN = "mg.martinmariano.com"
-DEBUG = False
+DEBUG = True
 
 logger = get_task_logger(__name__)
 
 
-@celery.task(ignore_result=True)
+@celery.task()
 def databaseRefreshAssignments():
     """Refresh the whole database, logging in each user on AVA Platform,
     only for online disiciplines and checks if user has a new assignment,
@@ -56,6 +58,11 @@ def databaseRefreshAssignments():
         with allow_join_result():
             assignmentList = userAssignments.get()
 
+        if DEBUG is True:
+            print('Substask return:')
+            print(assignmentList)
+            print('User assignment list size: {}'.format(len(assignmentList)))
+
         for assignment in assignmentList:
             currentAssignment = Assignments.query.filter(
                 Assignments.codigo == assignment['codigo']).first()
@@ -67,7 +74,9 @@ def databaseRefreshAssignments():
                     onlineDisciplines[0].discipline_id, assignment['type'],
                     assignment['days_left'])
 
-            # independente, associe à um usuário, e somente se aberta
+            # entrar na user.user_assignments e alocar este assignment, com este usuario e alterar o status nesta tabela intermediária
+
+            # independente, associe à um usuário
             user.assignments.append([currentAssignment, assignment['status']])
             db_session.add(currentAssignment)
 
@@ -193,13 +202,11 @@ def getUserAssignments(uninove_ra, uninove_senha, idCurso, codCurso):
     with AVAscraper(debug=DEBUG) as scraper:
         scraper.uninove_ra = uninove_ra
         scraper.uninove_senha = uninove_senha
-        scraper.loginAva()
+        try:
+            scraper.loginAva()
+        except LoginError as e:
+            return False
         questionarios = scraper.getQuestionarios(idCurso, codCurso)
-
-        for questionario in questionarios:
-            questionario['days_left'] = datetime.datetime.now(
-            ) + datetime.timedelta(days=int(questionario['days_left']))
-
         return questionarios
 
 
