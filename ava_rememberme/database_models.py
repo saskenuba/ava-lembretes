@@ -7,6 +7,7 @@ from sqlalchemy import (JSON, Boolean, Column, DateTime, ForeignKey, Integer,
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref, relationship
 from sqlalchemy.schema import Index
+from sqlalchemy.dialects.postgresql import insert
 
 from ava_rememberme.database import Base
 from ava_rememberme.exceptions import AssignmentExpired
@@ -131,10 +132,15 @@ class Users_Assignments(Base):
     def __init__(self, assignments=None, status=False):
         "docstring"
         self.assignments = assignments
-        self.status = self._formatStatus(status)
+        self.status = Users_Assignments.formatStatus(status)
 
+    def __repr__(self):
+        return u'User ID: {}, Assignment ID: {}, Status: {}'.format(
+            self.user_id, self.assignment_id, self.status)
+
+    @staticmethod
     # 1 = aberta, 2 = encerrada, 3 = agendada, 4 = corrigida, 5 = ?
-    def _formatStatus(self, unformatedStatus):
+    def formatStatus(unformatedStatus):
         status = str.lower(unformatedStatus)
 
         if status == 'aberto' or status == 'aberta':

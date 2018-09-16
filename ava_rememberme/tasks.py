@@ -30,7 +30,7 @@ def databaseRefreshAssignments():
     then updates the database.
     """
 
-    from .database_models import Users, Assignments
+    from .database_models import Users, Assignments, Users_Assignments
     from .database import db_session
 
     allUsers = Users.get()
@@ -67,18 +67,26 @@ def databaseRefreshAssignments():
             currentAssignment = Assignments.query.filter(
                 Assignments.codigo == assignment['codigo']).first()
 
-            # caso não exista, crie um assignment
+            # if it doesn't exist, create new assignment
             if currentAssignment is None:
                 currentAssignment = Assignments(
                     assignment['name'], assignment['codigo'],
                     onlineDisciplines[0].discipline_id, assignment['type'],
                     assignment['days_left'])
+                db_session.add(currentAssignment)
 
-            # entrar na user.user_assignments e alocar este assignment, com este usuario e alterar o status nesta tabela intermediária
+            # if this assignment already exists in intermediate table,
+            # update the status, else we append assignment to user
+            userAssignmentsEntry = Users_Assignments.query.filter(
+                Users_Assignments.user_id == user.user_id, Users_Assignments.
+                assignment_id == currentAssignment.assignment_id).first()
 
-            # independente, associe à um usuário
-            user.assignments.append([currentAssignment, assignment['status']])
-            db_session.add(currentAssignment)
+            if userAssignmentsEntry is not None:
+                userAssignmentsEntry.status = Users_Assignments.formatStatus(
+                    assignment['status'])
+            else:
+                user.assignments.append(
+                    [currentAssignment, assignment['status']])
 
         db_session.commit()
     return 'done'
