@@ -34,8 +34,8 @@ class AVAscraperFactory:
         :returns: AVAscraper instance.
 
         """
-        if len(cls.
-               _values) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
+        if len(cls._values
+               ) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
             cls._values.append(AVAscraper(debug=debug))
             cls._CURRENT_INSTANCES += 1
 
@@ -64,6 +64,7 @@ class AVAscraper(ContextDecorator):
 
         self.AVA_LOGIN_URL = "https://ava.uninove.br/seu/AVA/index.php"
         self.AVA_MAIN_URL = 'https://ava.uninove.br/seu/AVA/principal.php'
+        self.AVA_ATIVIDADE_URL = 'https://ava.uninove.br/seu/AVA/ferramentas/atividade.php'
 
         if debug:
             self.options.set_headless(headless=False)
@@ -233,15 +234,30 @@ class AVAscraper(ContextDecorator):
         if self.debug:
             print('Página de matéria EAD')
 
-        # checks if there is an Atividade tab to choose
+        # checks if there is an Atividade tab to choose, and then clicks it
         try:
-            abaAtividade = WebDriverWait(
-                self.driver, self.TIMEOUT_TIME_MENUTAB).until(
-                    EC.presence_of_element_located((By.ID, 'aba-atividade')))
-
-            self.driver.execute_script("arguments[0].click();", abaAtividade)
+            WebDriverWait(self.driver, self.TIMEOUT_TIME_MENUTAB).until(
+                EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, '#aba-atividade > a:nth-child(1)')))
         except TimeoutException:
             pass
+
+        try:
+            atividadeTab = self.driver.find_element_by_css_selector(
+                '#aba-atividade > a:nth-child(1)')
+            self.driver.execute_script("arguments[0].click();", atividadeTab)
+
+            WebDriverWait(self.driver, 5).until(
+                EC.url_to_be((self.AVA_ATIVIDADE_URL)))
+        except TimeoutException:
+            print(u'Não entrou na TAB de atividade.')
+            raise WrongPageError(u'Não entrou na TAB de atividade.')
+        except Exception as e:
+            print(e)
+            print(self.driver.current_url)
+
+        # WebDriverWait(self.driver, 10).until(
+        #    EC.url_to_be((self.AVA_LOGIN_URL)))
 
         if self.debug:
             print('TAB de atividade')
@@ -259,55 +275,47 @@ class AVAscraper(ContextDecorator):
             todosQuestionarios.get_attribute('innerHTML'), "lxml")
 
         # parsing questionaries and forums
-        questionarios = atividadesSoup.find_all('div', {'tipo': '002'})
-        foruns = atividadesSoup.find_all('div', {'tipo': '003'})
+        questionarios = atividadesSoup.find_all(
+            'div', class_='filtro-conteudo')
+        # foruns = atividadesSoup.find_all('div', {'tipo': '003'})
 
         questionariosList = []
         for questionario in questionarios:
 
+            name = questionario.select('span.marginLeft10')[0].text
+            codigo = questionario.find("div",
+                                       {"codigo": re.compile(r'.*')})['codigo']
+            status = questionario.select('p.sm2.white')[0].text
+            datas = re.findall(r'(\d+\/\d+\/\d+)+',
+                               questionario.select('div.bloco-data')[0].string)
+            daysLeft = datas[1]
+
             questionariosList.append({
-                'name':
-                re.sub('[\n\t]+', '',
-                       questionario.select('p.sm')[0].string),
-                'codigo':
-                questionario['codigo'],
-                'status':
-                questionario['status'],
-                'days_left':
-                re.search('[\d]+',
-                          questionario.select('span.RobotoLight')[0].string).
-                group(0),
-                'type':
-                u'Questionário'
+                'name': name,
+                'codigo': codigo,
+                'status': status,
+                'days_left': self._formatDateString(daysLeft),
+                'type': u'Questionário'
             })
 
         if self.debug:
             print('Questionarios: ')
             print(questionariosList)
 
-        formattedAssignments = self._formatAssignments(questionariosList)
-
-        return formattedAssignments
+        return questionariosList
         # depois pegar seu nome, peso e data de termino
 
-    def _formatAssignments(self, assignmentList):
-        """Formats datetime of assignment based on status.
+    def _formatDateString(self, assignmentDate):
+        """Formats date string to datetime object.
 
-        :param assignmentList:
-        :returns: dictionary with keys: name, codigo, status, days_left and type.
-        :rtype: dictionary
+        :param assignmentList: assignmentDate in string format of xx/xx/xxxx.
+        :returns: end date of assignment
+        :rtype: datetime
 
         """
-
-        for tarefa in assignmentList:
-            if tarefa['status'] == 'corrigida' or tarefa[
-                    'status'] == 'corrigido':
-                tarefa['days_left'] = datetime.datetime.now(
-                ) - datetime.timedelta(days=int(tarefa['days_left']))
-            else:
-                tarefa['days_left'] = datetime.datetime.now(
-                ) + datetime.timedelta(days=int(tarefa['days_left']))
-        return assignmentList
+        day, month, year = re.findall(r'(\d+)+', assignmentDate)
+        finaldate = datetime.datetime(int(year), int(month), int(day), 23, 59, 59)
+        return finaldate
 
     def _fillFormAndSubmit(self, idCurso, codCurso):
         """Fill main page form and submits it.
