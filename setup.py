@@ -10,6 +10,6 @@ setup(
     install_requires=[
         'flask', 'flask-security', 'flask-sqlalchemy', 'beautifulsoup4',
         'selenium', 'celery[redis]', 'requests', 'lxml', 'flask-babel',
-        'flask-migrate'
+        'flask-migrate', 'gunicorn'
     ],
     extras_require={'psql': ['psycopg2']})

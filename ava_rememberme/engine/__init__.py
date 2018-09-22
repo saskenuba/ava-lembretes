@@ -34,8 +34,8 @@ class AVAscraperFactory:
         :returns: AVAscraper instance.
 
         """
-        if len(cls._values
-               ) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
+        if len(cls.
+               _values) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
             cls._values.append(AVAscraper(debug=debug))
             cls._CURRENT_INSTANCES += 1
 
@@ -50,28 +50,47 @@ class AVAscraperFactory:
 
 
 class AVAscraper(ContextDecorator):
-    def __init__(self, uninove_ra=None, uninove_senha=None, debug=False):
+    def __init__(self,
+                 uninove_ra=None,
+                 uninove_senha=None,
+                 debug=False,
+                 engine="chrome"):
         """
         Initialize selenium driver with simple options.
         """
         self.uninove_ra = uninove_ra
         self.uninove_senha = uninove_senha
-        self.options = Options()
         self.TIMEOUT_TIME = 5
         self.TIMEOUT_TIME_LOGIN = 5
         self.TIMEOUT_TIME_MENUTAB = 4
         self.debug = debug
+        self.engine = engine
+        self.options = None
+        self.driver = None
 
         self.AVA_LOGIN_URL = "https://ava.uninove.br/seu/AVA/index.php"
         self.AVA_MAIN_URL = 'https://ava.uninove.br/seu/AVA/principal.php'
         self.AVA_ATIVIDADE_URL = 'https://ava.uninove.br/seu/AVA/ferramentas/atividade.php'
 
-        if debug:
-            self.options.set_headless(headless=False)
-        else:
-            self.options.set_headless(headless=True)
+        if self.engine == "firefox":
+            self.options = webdriver.FirefoxOptions()
 
-        self.driver = webdriver.Firefox(firefox_options=self.options)
+            if not self.debug:
+                self.options.add_argument("headless")
+
+            self.driver = webdriver.Firefox(firefox_options=self.options)
+
+        elif self.engine == "chrome":
+            self.options = webdriver.ChromeOptions()
+
+            if not self.debug:
+                self.options.add_argument("headless")
+
+            self.driver = webdriver.Chrome(chrome_options=self.options)
+        else:
+            raise Exception("You need to choose an engine for the webdriver.")
+
+            #self.options.set_headless(headless=False)
 
     def loginAva(self):
         """Login into AVA website with user's RA and AVA password.
@@ -291,11 +310,16 @@ class AVAscraper(ContextDecorator):
             daysLeft = datas[1]
 
             questionariosList.append({
-                'name': name,
-                'codigo': codigo,
-                'status': status,
-                'days_left': self._formatDateString(daysLeft),
-                'type': u'Questionário'
+                'name':
+                name,
+                'codigo':
+                codigo,
+                'status':
+                status,
+                'days_left':
+                self._formatDateString(daysLeft),
+                'type':
+                u'Questionário'
             })
 
         if self.debug:
@@ -314,7 +338,8 @@ class AVAscraper(ContextDecorator):
 
         """
         day, month, year = re.findall(r'(\d+)+', assignmentDate)
-        finaldate = datetime.datetime(int(year), int(month), int(day), 23, 59, 59)
+        finaldate = datetime.datetime(
+            int(year), int(month), int(day), 23, 59, 59)
         return finaldate
 
     def _fillFormAndSubmit(self, idCurso, codCurso):
