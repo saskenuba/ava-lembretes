@@ -1,0 +1,36 @@
+version: '3'
+
+networks:
+  webnet:
+
+services:
+
+  web:
+    build:
+      context: .
+      dockerfile: Webfile
+    ports:
+      - "5000:5000"
+    networks:
+      - webnet
+      - pgsql
+
+  redis:
+    image: "redis:latest"
+    networks:
+      - webnet
+
+  pgsql:
+    image: "postgres:10.5-alpine"
+    networks:
+      - webnet
+
+  celery:
+    build:
+      context: .
+      dockerfile: Celeryfile
+    depends_on:
+      - redis
+      - pgsql
+    networks:
+      - webnet
