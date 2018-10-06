@@ -2,6 +2,11 @@ version: '3'
 
 networks:
   webnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.103.0.1/16
 
 services:
 
@@ -9,10 +14,15 @@ services:
     build:
       context: .
       dockerfile: Webfile
+    environment:
+      - FLASK_APP=ava_rememberme
+      - POSTGRES_DB=ava_rememberme
+      - POSTGRES_PASSWORD=test
     ports:
-      - "5000:5000"
+      - "8080:8000"
     networks:
       - webnet
+    depends_on:
       - pgsql
 
   redis:
@@ -22,15 +32,18 @@ services:
 
   pgsql:
     image: "postgres:10.5-alpine"
+    restart: always
+    environment:
+      - POSTGRES_DB=ava_rememberme
+      - POSTGRES_PASSWORD=test
+      - PGDATA=/var/lib/postgresql/data/pgdata
     networks:
       - webnet
 
-  celery:
-    build:
-      context: .
-      dockerfile: Celeryfile
-    depends_on:
-      - redis
-      - pgsql
-    networks:
-      - webnet
+  #celery:
+  #  build: .
+  #  depends_on:
+  #    - redis
+  #    - pgsql
+  #  networks:
+  #    - webnet

@@ -1,13 +1,11 @@
 FROM python:3.6.6-stretch
 MAINTAINER "Martin Mariano <contato@martinmariano.com>"
 
-ADD . /app
-WORKDIR /app
-
-ENV FLASK_APP=ava_rememberme
+ADD . /code
+WORKDIR /code
 
 RUN pip install pipenv
 RUN pipenv install -e .[psql] --skip-lock
 
 ENTRYPOINT ["sh", "-c"]
-CMD ["pipenv run flask", "run"]
+CMD ["pipenv run gunicorn -w 1 --bind=0.0.0.0 ava_rememberme:app"]
