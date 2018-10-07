@@ -12,4 +12,4 @@ setup(
         'selenium', 'celery[redis]', 'requests', 'lxml', 'flask-babel',
         'flask-migrate', 'gunicorn'
     ],
-    extras_require={'psql': ['psycopg2']})
+    extras_require={'psql': ['psycopg2'], 'monitoring': ['flower']})
