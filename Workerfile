@@ -10,8 +10,8 @@ RUN apt-get update && apt-get -y install chromedriver
 #RUN chmod +x /usr/local/bin/chromedriver/chromedriver
 
 RUN pip install pipenv
-RUN pipenv install -e .[psql] --skip-lock
-RUN chmod +x docker-web-script.sh
+RUN pipenv install -e .[psql,monitoring] --skip-lock
+RUN chmod +x docker-worker-script.sh
 
 ENTRYPOINT ["sh", "-c"]
-CMD ["./docker-web-script.sh"]
+CMD ["./docker-worker-script.sh"]

@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 
 networks:
   webnet:
@@ -16,6 +16,7 @@ services:
       dockerfile: Webfile
     environment:
       - FLASK_APP=ava_rememberme
+      - POSTGRES_USER=ava_rememberme
       - POSTGRES_DB=ava_rememberme
       - POSTGRES_PASSWORD=test
     ports:
@@ -34,16 +35,25 @@ services:
     image: "postgres:10.5-alpine"
     restart: always
     environment:
-      - POSTGRES_DB=ava_rememberme
+      - POSTGRES_USER=ava_rememberme
       - POSTGRES_PASSWORD=test
       - PGDATA=/var/lib/postgresql/data/pgdata
     networks:
       - webnet
 
-  #celery:
-  #  build: .
-  #  depends_on:
-  #    - redis
-  #    - pgsql
-  #  networks:
-  #    - webnet
+  celery:
+    build:
+      context: .
+      dockerfile: Workerfile
+    environment:
+      - FLASK_APP=ava_rememberme
+      - POSTGRES_USER=ava_rememberme
+      - POSTGRES_DB=ava_rememberme
+      - POSTGRES_PASSWORD=test
+      - C_FORCE_ROOT=true
+    depends_on:
+      - redis
+      - pgsql
+      - web
+    networks:
+      - webnet
