@@ -11,9 +11,13 @@ app.config['SECRET_KEY'] = token_hex(32)
 celery = create_celery(app)
 babel = Babel(app, default_locale='br')
 
-
 from ava_rememberme.database import init_db, engine, Base
 from ava_rememberme import views
 
-init_db()
+# init_db()
 Migrate(app, db=Base)
+
+
+@app.cli.command()
+def create_db():
+    Base.metadata.create_all()

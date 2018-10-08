@@ -11,12 +11,10 @@ from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from .exceptions import (DriverInstanceError, LoginError, ScraperError,
-                         WrongPageError)
+from .exceptions import (LoginError, ScraperError, WrongPageError)
 
 
 class AVAscraperFactory:
@@ -34,8 +32,8 @@ class AVAscraperFactory:
         :returns: AVAscraper instance.
 
         """
-        if len(cls.
-               _values) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
+        if len(cls._values
+               ) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
             cls._values.append(AVAscraper(debug=debug))
             cls._CURRENT_INSTANCES += 1
 
@@ -84,13 +82,13 @@ class AVAscraper(ContextDecorator):
             self.options = webdriver.ChromeOptions()
 
             if not self.debug:
-                self.options.add_argument("headless")
+                self.options.add_argument("--headless")
+                self.options.add_argument("--no-sandbox")
+                self.options.add_argument("--disable-dev-shm-usage")
 
             self.driver = webdriver.Chrome(chrome_options=self.options)
         else:
             raise Exception("You need to choose an engine for the webdriver.")
-
-            #self.options.set_headless(headless=False)
 
     def loginAva(self):
         """Login into AVA website with user's RA and AVA password.
@@ -120,7 +118,8 @@ class AVAscraper(ContextDecorator):
                 self.driver.find_element_by_id('lb_conteudo').text)
 
     def getMaterias(self, userDisciplines=False):
-        """Get all user disciplines IDCurso, CodCurso, Name and if it is online or on-site.
+        """Get all user disciplines IDCurso, CodCurso, Name and if
+        it is online or on-site.
 
         :param userDisciplines: dictionary if user already has disciplines.
         :returns: dictionary with discipline ID, Cod, Name and isOnline.
