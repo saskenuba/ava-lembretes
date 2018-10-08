@@ -19,6 +19,7 @@ services:
       - POSTGRES_USER=ava_rememberme
       - POSTGRES_DB=ava_rememberme
       - POSTGRES_PASSWORD=test
+      - BROKER_URL=redis
     ports:
       - "8080:8000"
     networks:

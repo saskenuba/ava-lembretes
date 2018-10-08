@@ -1,13 +1,14 @@
 from celery.schedules import crontab
+import os
 
 # Broker settings.
-broker_url = 'redis://localhost'
+broker_url = 'redis://{}:6379'.format(os.environ.get('BROKER_URL'))
 
 # List of modules to import when the Celery worker starts.
 # imports = ('myapp.tasks',)
 
 # Using the database to store task state and results.
-result_backend = 'redis://'
+result_backend = 'redis://{}:6379'.format(os.environ.get('BROKER_URL'))
 
 # Using pickle because it supports serializing datetime objects
 accept_content = ['pickle']

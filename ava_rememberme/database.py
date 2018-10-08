@@ -5,7 +5,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from contextlib import ContextDecorator
 
 engine = create_engine(
-    'postgresql+psycopg2://postgres:{}@pgsql/{}'.format(
+    'postgresql+psycopg2://{}:{}@pgsql/{}'.format(
+        os.environ.get('POSTGRES_USER'),
         os.environ.get('POSTGRES_PASSWORD'),
         os.environ.get('POSTGRES_DB')),
     convert_unicode=True)
@@ -23,6 +24,6 @@ def init_db():
     # they will be registered properly on the metadata.  Otherwise
     # you will have to import them first before calling init_db()
     from ava_rememberme.database_models import Users, Profiles, Assignments
-    # Base.metadata.reflect()
+    Base.metadata.reflect()
     # Base.metadata.drop_all()
-    Base.metadata.create_all()
+    # Base.metadata.create_all()
