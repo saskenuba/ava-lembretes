@@ -1,13 +1,10 @@
-FROM python:3.6.6-stretch
+FROM python:3.6.7-stretch
 MAINTAINER "Martin Mariano <contato@martinmariano.com>"
 
 ADD . /code
 WORKDIR /code
 
-RUN apt-get update && apt-get -y install chromedriver
-#RUN mkdir /usr/local/bin/chromedriver
-#RUN curl https://chromedriver.storage.googleapis.com/2.42/chromedriver_linux64.zip | bsdtar -xf- -C /usr/local/bin/chromedriver
-#RUN chmod +x /usr/local/bin/chromedriver/chromedriver
+RUN apt-get update && apt-get install chromedriver --yes -f
 
 RUN pip install pipenv
 RUN pipenv install -e .[psql,monitoring] --skip-lock

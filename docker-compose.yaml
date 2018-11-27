@@ -33,7 +33,7 @@ services:
       - webnet
 
   pgsql:
-    image: "postgres:10.5-alpine"
+    image: "postgres:11.1-alpine"
     restart: always
     environment:
       - POSTGRES_USER=ava_rememberme
@@ -51,6 +51,7 @@ services:
       - POSTGRES_USER=ava_rememberme
       - POSTGRES_DB=ava_rememberme
       - POSTGRES_PASSWORD=test
+      - BROKER_URL=redis
       - C_FORCE_ROOT=true
     depends_on:
       - redis

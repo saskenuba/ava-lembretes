@@ -7,7 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from ava_rememberme import app
 from ava_rememberme.database import db_session
-from ava_rememberme.database_models import Profiles, Users
+from ava_rememberme.database_models import Profiles, Users, Users_Assignments
 from ava_rememberme.engine.exceptions import LoginError
 from ava_rememberme.forms import RegisterForm
 from ava_rememberme.tasks import (databaseRefreshAssignments,
@@ -47,8 +47,8 @@ def index():
             emailSendConfirmation.delay(novoUsuario.email, novoUsuario.nome,
                                         current_app.config['SECRET_KEY'])
             flash(
-                u'Um email foi enviado  para {}. Por favor confirme para começar utilizar o serviço.'.
-                format(novoUsuario.email), 'success')
+                u'Um email foi enviado  para {}. Por favor confirme para começar utilizar o serviço.'
+                .format(novoUsuario.email), 'success')
             return redirect(url_for('index'))
 
         # erro na validação do form
@@ -162,9 +162,29 @@ def userWithSettingsCommit(user):
     db_session.commit()
 
 
-@app.route('/teste')
-def testamateria():
+@app.route('/testeD')
+def testeDiscipline():
 
     # id curso 255980, codigo 379019
     databaseRefreshDisciplines.delay()
+    return 'woa'
+
+
+@app.route('/testeA')
+def testaAssignment():
+
+    # id curso 255980, codigo 379019
+    databaseRefreshAssignments.delay()
+    return 'woa'
+
+
+@app.route('/testeSQL')
+def testaSQL():
+
+    # id curso 255980, codigo 379019
+    print(Users.query.all())
+    teste = Users_Assignments.query.filter(
+        Users_Assignments.user_id == 1,
+        Users_Assignments.assignment_id == 5).first()
+    print(teste.status)
     return 'woa'
