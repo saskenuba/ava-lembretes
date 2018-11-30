@@ -151,8 +151,10 @@ class Users_Assignments(Base):
             return 3
         elif status == 'corrigida' or status == 'corrigido':
             return 4
+        elif status == 'expirada' or status == 'expirado':
+            return 5
         else:
-            raise Exception('Unknown status')
+            raise Exception(f'{status} is unknown. Verify it.')
 
 
 class Disciplines(Base):
