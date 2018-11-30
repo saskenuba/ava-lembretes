@@ -32,8 +32,8 @@ class AVAscraperFactory:
         :returns: AVAscraper instance.
 
         """
-        if len(cls._values
-               ) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
+        if len(cls.
+               _values) == 0 and cls._CURRENT_INSTANCES < cls._MAX_INSTANCES:
             cls._values.append(AVAscraper(debug=debug))
             cls._CURRENT_INSTANCES += 1
 
@@ -83,8 +83,8 @@ class AVAscraper(ContextDecorator):
 
             if not self.debug:
                 self.options.add_argument("--headless")
+                self.options.add_argument("--disable-gpu")
                 self.options.add_argument("--no-sandbox")
-                self.options.add_argument("--disable-dev-shm-usage")
 
             self.driver = webdriver.Chrome(chrome_options=self.options)
         else:
@@ -113,7 +113,7 @@ class AVAscraper(ContextDecorator):
             WebDriverWait(self.driver, self.TIMEOUT_TIME_LOGIN).until(
                 EC.url_contains(('principal')))
         # something wrong happened on AVA platform
-        except TimeoutException as e:
+        except TimeoutException:
             raise LoginError(
                 self.driver.find_element_by_id('lb_conteudo').text)
 
@@ -130,26 +130,27 @@ class AVAscraper(ContextDecorator):
             print(userDisciplines)
 
         try:
-            WebDriverWait(self.driver, 5).until(
-                EC.url_to_be((self.AVA_MAIN_URL)))
-        except WrongPageError:
-            raise WrongPageError(
-                u'Localização incorreta. Certifique-se da página')
+            menuTodasMaterias = WebDriverWait(
+                self.driver, self.TIMEOUT_TIME).until(
+                    EC.presence_of_element_located((By.ID, 'menu0')))
+        except Exception as e:
+            raise Exception(e)
 
-        menuTodasMaterias = WebDriverWait(
-            self.driver, self.TIMEOUT_TIME).until(
-                EC.presence_of_element_located((By.ID, 'menu0')))
-
-        soup = BeautifulSoup(
-            menuTodasMaterias.get_attribute('innerHTML'), "lxml")
+        try:
+            soup = BeautifulSoup(
+                menuTodasMaterias.get_attribute('innerHTML'), "lxml")
+        except Exception as e:
+            raise Exception(e)
 
         materiasLista = []
         materiasSoup = soup.find_all("div", {"idcurso": re.compile(r'.*')})
 
+        # Pickle CAN'T handle HTML parser.
+        # We need(should) to cast all to primitives.
         for materia in materiasSoup:
             idCurso = int(materia.get('idcurso'))
-            codCurso = materia.get('codigo')
-            disciplineName = materia.select('span.md')[0].string
+            codCurso = int(materia.get('codigo'))
+            disciplineName = str(materia.select('span.md')[0].string)
 
             if self.debug:
                 print(idCurso)
@@ -169,10 +170,16 @@ class AVAscraper(ContextDecorator):
         for materia in materiasLista:
             if self.disciplineIsOnline(materia['IDCurso'],
                                        materia['CodCurso']):
+                if self.debug:
+                    print("State: Assignment is online.")
                 materia.update({'isOnline': True})
             else:
+                if self.debug:
+                    print("State: Assignment is not online.")
                 materia.update({'isOnline': False})
 
+        if self.debug:
+            print(materiasLista)
         return materiasLista
 
     def disciplineIsOnline(self, idCurso, codCurso):
@@ -184,17 +191,25 @@ class AVAscraper(ContextDecorator):
         :rtype: dict
 
         """
+        if self.debug:
+            print("Function: disciplineIsOnline")
 
         # start at main page
         if self.driver.current_url != self.AVA_MAIN_URL:
             try:
+                if self.debug:
+                    print("Action: Trocando de URL.")
+
                 self.driver.get(self.AVA_MAIN_URL)
                 WebDriverWait(self.driver, self.TIMEOUT_TIME).until(
                     EC.presence_of_element_located((By.ID, 'frm-principal')))
             except WebDriverException:
-                pass
+                raise WebDriverException(u'Algo deu errado.')
             except TimeoutException:
                 raise WrongPageError(u'Não achou elemento "frm-principal".')
+
+        if self.debug:
+            print("Action: preenchendo form.")
 
         self._fillFormAndSubmit(idCurso, codCurso)
 
@@ -207,11 +222,13 @@ class AVAscraper(ContextDecorator):
 
         if self.debug:
             try:
+                print("State: Trocou de página.")
+                print("Action: Imprimindo titulo da disciplina.")
                 titulo = WebDriverWait(self.driver, 5).until(
                     EC.presence_of_element_located((By.ID,
                                                     'titulo-disciplina')))
                 soup = BeautifulSoup(titulo.get_attribute('innerHTML'), "lxml")
-                print(soup.find('p').string)
+                print(f"Título da matéria: {soup.find('p').string}")
             except TimeoutError:
                 raise WrongPageError(
                     u'Não achou elemento "titulo-disciplina".')
@@ -244,7 +261,7 @@ class AVAscraper(ContextDecorator):
         except WebDriverException as e:
             print(e)
             pass
-        except TimeoutException as e:
+        except TimeoutException:
             raise WrongPageError(u'Não achou elemento "frm-principal".')
 
         self._fillFormAndSubmit(idCurso, codCurso)

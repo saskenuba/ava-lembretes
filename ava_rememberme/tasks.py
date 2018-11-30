@@ -234,9 +234,11 @@ def getAllDisciplines(uninove_ra, uninove_senha, userDisciplines=False):
         scraper.uninove_senha = uninove_senha
         try:
             scraper.loginAva()
-        except LoginError as e:
+        except LoginError:
             return False
+
         materiasList = scraper.getMaterias(userDisciplines)
+        print(materiasList)
         return materiasList
 
 

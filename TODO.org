@@ -11,3 +11,9 @@
 
      2. databaseRefreshDisciplines: Seria legal saber o que acontece quando a
         mesma matéria é online para um e presencial para outro.
+
+O sistema está entrando duas vezes na pagina principal do ava - depois de logado -
+fazer uma checagem para evitar esta ineficiência.
+
+Por algum motivo o sistema nao esta checando as tarefas de uma disciplina adicionada
+posteriormente, verificar.
