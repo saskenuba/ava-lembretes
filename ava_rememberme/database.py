@@ -5,9 +5,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from contextlib import ContextDecorator
 
 engine = create_engine(
-    'postgresql+psycopg2://{}:{}@pgsql/{}'.format(
+    'postgresql+psycopg2://{}:{}@{}/{}'.format(
         os.environ.get('POSTGRES_USER'),
         os.environ.get('POSTGRES_PASSWORD'),
+        os.environ.get('POSTGRES_NETWORK'),
         os.environ.get('POSTGRES_DB')),
     convert_unicode=True)
 
